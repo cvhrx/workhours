@@ -60,10 +60,10 @@
         <button class="nav-item active" data-page="dashboardPage">Dashboard</button>
         <button class="nav-item" data-page="rapportiniPage">Rapportini</button>
         <button class="nav-item" data-page="calendarioPage">Calendario</button>
-        <button class="nav-item" data-action="clients">Clienti</button>
+        <button class="nav-item" data-page="clientiPage">Clienti</button>
         <button class="nav-item" data-page="pdfPage">Riepiloghi / PDF</button>
         <button class="nav-item" data-page="finanzePage">Finanze</button>
-        <button class="nav-item" data-action="settings">Impostazioni</button>
+        <button class="nav-item" data-page="settingsPage">Impostazioni</button>
       </nav>
     </aside>
 
@@ -82,7 +82,7 @@
         </div>
         <div class="dashboard-grid">
           <section class="card dash-card">
-            <div class="card-head"><h2>Riepilogo ore mese</h2><button type="button" class="btn primary" data-page-jump="rapportiniPage">+ Nuovo rapportino</button></div>
+            <div class="card-head"><h2>Riepilogo ore mese</h2></div>
             <div class="donut-wrap">
               <div class="donut" id="dashDonut"><span id="dashDonutTotal">0h</span></div>
               <div class="legend">
@@ -97,7 +97,7 @@
             <div class="quick-actions">
               <button class="btn primary" data-page-jump="rapportiniPage">Compila giornata</button>
               <button class="btn ghost" data-action="export">Esporta PDF</button>
-              <button class="btn ghost" data-action="clients">Gestisci clienti</button>
+              <button class="btn ghost" data-page="clientiPage">Gestisci clienti</button>
             </div>
           </section>
         </div>
@@ -131,6 +131,7 @@
           </div>
           <div class="field"><label>Note</label><textarea id="note" rows="3" placeholder="Cliente / sede / attività"></textarea></div>
           <div class="row gap action-row">
+            <button type="button" class="btn ghost" id="btnDuplica">Duplica ieri</button>
             <button type="button" class="btn primary" id="btnSaveDay">Salva</button>
             <button type="button" class="btn ghost" id="btnExportPdf">PDF</button>
             <button type="button" class="btn settings desktop-only" id="btnSettings" title="Impostazioni">⚙️</button>
@@ -138,8 +139,7 @@
           </div>
         </section>
         <div class="card row tabs desktop-only">
-          <button id="tabList" class="chip active">Elenco</button>
-          <button id="tabCal" class="chip">Calendario</button>
+          
         </div>
         <section id="listView" class="card desktop-only"></section>
       </section>
@@ -166,7 +166,7 @@
             <div class="stat-card"><span>Saldo</span><strong>€0</strong></div>
           </div>
         </section>
-      </section>
+      <section id="clientiPage" class="page desktop-only"><section class="card"><h2>Clienti</h2><div class="row two"><div><h3>Lista clienti</h3><div id="clientListBox">I clienti compariranno qui</div></div><div><h3>Dettaglio e Tariffe</h3><p class="muted">Locale / Italia / Estero</p></div></div></section></section><section id="settingsPage" class="page desktop-only"><section class="card"><h2>Impostazioni</h2><div class="stat-grid small"><div class="stat-card"><span>Dati azienda</span></div><div class="stat-card"><span>Backup</span></div><div class="stat-card"><span>Migrazione V2</span></div></div></section></section></section>
     </main>
   </section>
 
