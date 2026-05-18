@@ -72,8 +72,71 @@ document.addEventListener('DOMContentLoaded', ()=>{
   $('#tabList').onclick = ()=> switchView('list');
   $('#tabCal').onclick  = ()=> switchView('cal');
   $('#closeDayDlg').onclick = ()=> $('#dayDlg').close();
+  initShellNav();
 });
 
+function initShellNav(){
+  document.querySelectorAll('[data-page]').forEach(btn=>{
+    btn.addEventListener('click',()=>showMainPage(btn.dataset.page));
+  });
+  document.querySelectorAll('[data-page-jump]').forEach(btn=>{
+    btn.addEventListener('click',()=>showMainPage(btn.dataset.pageJump));
+  });
+  document.querySelectorAll('[data-action="settings"]').forEach(btn=>btn.addEventListener('click',()=>$('#settingsDlg')?.showModal()));
+  document.querySelectorAll('[data-action="clients"]').forEach(btn=>btn.addEventListener('click',()=>{
+    $('#settingsDlg')?.showModal();
+    if(typeof togglePane==='function') togglePane('Cli');
+  }));
+  document.querySelectorAll('[data-action="export"]').forEach(btn=>btn.addEventListener('click',()=>exportPdf()));
+  const logout = ()=> auth.signOut();
+  const b1=document.getElementById('btnLogout'); if(b1) b1.onclick=logout;
+  const b2=document.getElementById('btnLogoutMobile'); if(b2) b2.onclick=logout;
+}
+
+function showMainPage(pageId){
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('page-active'));
+  const p=document.getElementById(pageId);
+  if(p) p.classList.add('page-active');
+  document.querySelectorAll('.nav-item').forEach(b=>b.classList.toggle('active', b.dataset.page===pageId));
+  const titles={dashboardPage:'Dashboard',rapportiniPage:'Rapportini',calendarioPage:'Calendario',pdfPage:'Riepiloghi / PDF',finanzePage:'Finanze'};
+  const title=document.getElementById('pageTitle'); if(title) title.textContent=titles[pageId]||'WorkHours';
+  if(pageId==='calendarioPage'){
+    const dp=document.getElementById('dayPicker');
+    if(dp && dp.value && typeof loadMonth==='function') loadMonth(dp.value.slice(0,7));
+  }
+}
+
+function syncMobileDate(){
+  const d=document.getElementById('dayPicker');
+  const m=document.getElementById('dayPickerMobile');
+  if(!d || !m) return;
+  if(!m.value) m.value=d.value;
+  m.onchange=async ()=>{ d.value=m.value; await loadDay(d.value); await loadMonth(d.value.slice(0,7)); };
+  d.addEventListener('change',()=>{ m.value=d.value; });
+}
+
+function updateDashboard(arr){
+  const filled=arr.filter(v=>(v.totalH||0)>0 || (v.km||0)>0 || v.note);
+  const ord=arr.reduce((s,v)=>s+(v.ordH||0),0);
+  const str=arr.reduce((s,v)=>s+(v.strH||0),0);
+  const travel=arr.reduce((s,v)=>s+(v.travelH||0),0);
+  const km=arr.reduce((s,v)=>s+(v.km||0),0);
+  const total=ord+str+travel;
+  const set=(id,val)=>{const el=document.getElementById(id); if(el) el.textContent=val;};
+  set('dashOreMese', total.toFixed(1)+'h');
+  set('dashKmMese', Math.round(km));
+  set('dashGiornate', filled.length);
+  set('dashClienti', (state.clients||[]).filter(c=>!isEmptyClient(c)).length);
+  set('dashOrd', ord.toFixed(1)+'h');
+  set('dashStr', str.toFixed(1)+'h');
+  set('dashTravel', travel.toFixed(1)+'h');
+  set('dashDonutTotal', total.toFixed(1)+'h');
+  const donut=document.getElementById('dashDonut');
+  if(donut){
+    const a=total?ord/total*360:0; const b=total?travel/total*360:0;
+    donut.style.background=`conic-gradient(var(--primary) 0deg ${a}deg, #38bdf8 ${a}deg ${a+b}deg, #f97316 ${a+b}deg 360deg)`;
+  }
+}
 
 function setTariffInputs(t){
   $('#tarOrd').value = (t.ord ?? 0);
@@ -208,6 +271,7 @@ async function initApp(){
   const dp = document.getElementById('dayPicker');
   const today = new Date().toISOString().slice(0,10);
   dp.value = dp.value || today;
+  syncMobileDate();
   dp.addEventListener('change', async e=>{
     await loadDay(e.target.value);
     await loadMonth(e.target.value.slice(0,7));
@@ -471,6 +535,7 @@ async function loadMonth(yyyyMM){
     alert('Errore lettura mese: ' + (e.message||e.code));
   }
   const arr = Object.values(daysMap).sort((a,b)=>a.id.localeCompare(b.id));
+  updateDashboard(arr);
 
   if(list){
     arr.forEach(v=>{

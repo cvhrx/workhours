@@ -3,7 +3,7 @@
   "short_name": "WorkHours",
   "start_url": ".",
   "display": "standalone",
-  "background_color": "#ffffff",
+  "background_color": "#f6f8fb",
   "theme_color": "#1E2A38",
   "icons": [
     {

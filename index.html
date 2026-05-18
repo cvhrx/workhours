@@ -3,28 +3,27 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Rapportini</title>
+  <title>WorkHours</title>
   <link rel="manifest" href="manifest.json">
   <meta name="theme-color" content="#1E2A38">
-  <link rel="icon" href="assets/favicon.png">
-  <link rel="apple-touch-icon" href="assets/favicon.png">
+  <link rel="icon" href="assets/favicon.ico">
+  <link rel="apple-touch-icon" href="assets/icon-192.png">
   <link rel="stylesheet" href="styles.css">
-  <!-- Firebase (compat) -->
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
-  <!-- PDF -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
 </head>
 <body>
-  <header class="app-header"><div class="brand"><img src="assets/logo-workhours-dark.png" class="logo" alt=""></div></header>
-  <main class="container">
-    <section id="authCard" class="card">
+  <section id="authCard" class="auth-shell">
+    <div class="auth-panel">
+      <div class="auth-brand"><img src="assets/logo-workhours-light.png" class="auth-logo" alt="WorkHours"></div>
       <h1>Accesso</h1>
-      <div class="field"><label>Email</label><input id="loginEmail" type="email"></div>
-      <div class="field"><label>Password</label><input id="loginPass" type="password"></div>
-      <div class="row gap">
+      <p class="muted auth-sub">Gestione rapportini, clienti e riepiloghi.</p>
+      <div class="field"><label>Email</label><input id="loginEmail" type="email" autocomplete="email"></div>
+      <div class="field"><label>Password</label><input id="loginPass" type="password" autocomplete="current-password"></div>
+      <div class="row gap auth-actions">
         <button type="button" class="btn primary" id="btnLogin">Entra</button>
         <button type="button" class="btn ghost" id="btnShowRegister">Registra</button>
       </div>
@@ -51,49 +50,125 @@
           <button type="button" class="btn ghost" id="btnCancelRegister">Annulla</button>
         </div>
       </div>
-    </section>
+    </div>
+  </section>
 
-    <section id="app" class="hidden">
-      <div class="card row two">
-        <div class="field full"><label>Giorno</label><input type="date" id="dayPicker"></div>
-      </div>
+  <section id="app" class="app-shell hidden">
+    <aside class="sidebar desktop-only">
+      <div class="side-brand"><img src="assets/logo-workhours-dark.png" class="side-logo" alt="WorkHours"></div>
+      <nav class="side-nav">
+        <button class="nav-item active" data-page="dashboardPage">Dashboard</button>
+        <button class="nav-item" data-page="rapportiniPage">Rapportini</button>
+        <button class="nav-item" data-page="calendarioPage">Calendario</button>
+        <button class="nav-item" data-action="clients">Clienti</button>
+        <button class="nav-item" data-page="pdfPage">Riepiloghi / PDF</button>
+        <button class="nav-item" data-page="finanzePage">Finanze</button>
+        <button class="nav-item" data-action="settings">Impostazioni</button>
+      </nav>
+    </aside>
 
-      <section class="card" id="compileCard">
-        <h2>Compila giornata</h2>
-        <div class="grid-2">
-          <div class="row two tight">
-            <div class="field"><label>Ingresso 1</label><div class="timebox"><select id="in1h"></select><select id="in1m"></select></div></div>
-            <div class="field"><label>Uscita 1</label><div class="timebox"><select id="out1h"></select><select id="out1m"></select></div></div>
-          </div>
-          <div class="row two tight">
-            <div class="field"><label>Ingresso 2</label><div class="timebox"><select id="in2h"></select><select id="in2m"></select></div></div>
-            <div class="field"><label>Uscita 2</label><div class="timebox"><select id="out2h"></select><select id="out2m"></select></div></div>
-          </div>
+    <main class="main-area">
+      <header class="topbar desktop-only">
+        <div><h1 id="pageTitle">Dashboard</h1><p class="muted">WorkHours Artigiano</p></div>
+        <button type="button" class="btn ghost" id="btnLogout">Logout</button>
+      </header>
+
+      <section id="dashboardPage" class="page page-active desktop-only">
+        <div class="stat-grid">
+          <div class="stat-card"><span>Ore mese</span><strong id="dashOreMese">0h</strong></div>
+          <div class="stat-card"><span>KM mese</span><strong id="dashKmMese">0</strong></div>
+          <div class="stat-card"><span>Giornate compilate</span><strong id="dashGiornate">0</strong></div>
+          <div class="stat-card"><span>Clienti</span><strong id="dashClienti">0</strong></div>
         </div>
-        <div class="row two">
-          <div class="field"><label>KM totali</label><input id="km" inputmode="numeric" value="0"></div>
-          <div class="field"><label>Cliente</label><select id="clientSelect"><option>—</option></select></div>
-        </div>
-        <div class="row chips">
-          <button type="button" id="chipTrasf" class="chip">Trasferta</button>
-          <button type="button" id="chipPern" class="chip">Pernotto</button>
-        </div>
-        <div class="field"><label>Note</label><textarea id="note" rows="3" placeholder="Cliente / sede / attività"></textarea></div>
-        <div class="row gap">
-          <button type="button" class="btn primary" id="btnSaveDay">Salva giornata</button>
-          <button type="button" class="btn ghost" id="btnExportPdf">Esporta PDF</button>
-          <button type="button" class="btn settings" id="btnSettings" title="Impostazioni">⚙️</button>
+        <div class="dashboard-grid">
+          <section class="card dash-card">
+            <div class="card-head"><h2>Riepilogo ore mese</h2><button type="button" class="btn primary" data-page-jump="rapportiniPage">+ Nuovo rapportino</button></div>
+            <div class="donut-wrap">
+              <div class="donut" id="dashDonut"><span id="dashDonutTotal">0h</span></div>
+              <div class="legend">
+                <div><i class="dot ord"></i> Ordinarie <strong id="dashOrd">0h</strong></div>
+                <div><i class="dot travel"></i> Viaggio <strong id="dashTravel">0h</strong></div>
+                <div><i class="dot str"></i> Straordinarie <strong id="dashStr">0h</strong></div>
+              </div>
+            </div>
+          </section>
+          <section class="card dash-card">
+            <h2>Azioni rapide</h2>
+            <div class="quick-actions">
+              <button class="btn primary" data-page-jump="rapportiniPage">Compila giornata</button>
+              <button class="btn ghost" data-action="export">Esporta PDF</button>
+              <button class="btn ghost" data-action="clients">Gestisci clienti</button>
+            </div>
+          </section>
         </div>
       </section>
 
-      <div class="card row tabs">
-        <button id="tabList" class="chip active">Elenco</button>
-        <button id="tabCal" class="chip">Calendario</button>
-      </div>
-      <section id="listView" class="card"></section>
-      <section id="calView" class="card hidden"><div id="calGrid" class="cal-grid"></div></section>
-    </section>
-  </main>
+      <section id="rapportiniPage" class="page page-active-mobile">
+        <div class="card row two desktop-only">
+          <div class="field full"><label>Giorno</label><input type="date" id="dayPicker"></div>
+        </div>
+        <section class="card" id="compileCard">
+          <div class="mobile-brand mobile-only"><img src="assets/logo-workhours-light.png" alt="WorkHours"></div>
+          <h2>Segna ore</h2>
+          <div class="field mobile-only"><label>Giorno</label><input type="date" id="dayPickerMobile" aria-label="Giorno mobile"></div>
+          <div class="grid-2">
+            <div class="row two tight">
+              <div class="field"><label>Ingresso 1</label><div class="timebox"><select id="in1h"></select><select id="in1m"></select></div></div>
+              <div class="field"><label>Uscita 1</label><div class="timebox"><select id="out1h"></select><select id="out1m"></select></div></div>
+            </div>
+            <div class="row two tight">
+              <div class="field"><label>Ingresso 2</label><div class="timebox"><select id="in2h"></select><select id="in2m"></select></div></div>
+              <div class="field"><label>Uscita 2</label><div class="timebox"><select id="out2h"></select><select id="out2m"></select></div></div>
+            </div>
+          </div>
+          <div class="row two">
+            <div class="field"><label>KM totali</label><input id="km" inputmode="numeric" value="0"></div>
+            <div class="field"><label>Cliente</label><select id="clientSelect"><option>—</option></select></div>
+          </div>
+          <div class="row chips">
+            <button type="button" id="chipTrasf" class="chip">Trasferta</button>
+            <button type="button" id="chipPern" class="chip">Pernotto</button>
+          </div>
+          <div class="field"><label>Note</label><textarea id="note" rows="3" placeholder="Cliente / sede / attività"></textarea></div>
+          <div class="row gap action-row">
+            <button type="button" class="btn primary" id="btnSaveDay">Salva</button>
+            <button type="button" class="btn ghost" id="btnExportPdf">PDF</button>
+            <button type="button" class="btn settings desktop-only" id="btnSettings" title="Impostazioni">⚙️</button>
+            <button type="button" class="btn ghost mobile-only" id="btnLogoutMobile">Logout</button>
+          </div>
+        </section>
+        <div class="card row tabs desktop-only">
+          <button id="tabList" class="chip active">Elenco</button>
+          <button id="tabCal" class="chip">Calendario</button>
+        </div>
+        <section id="listView" class="card desktop-only"></section>
+      </section>
+
+      <section id="calendarioPage" class="page desktop-only">
+        <section id="calView" class="card"><div id="calGrid" class="cal-grid"></div></section>
+      </section>
+
+      <section id="pdfPage" class="page desktop-only">
+        <section class="card">
+          <h2>Riepiloghi / PDF</h2>
+          <p class="muted">In questa prima fase usiamo l'export PDF già esistente.</p>
+          <button type="button" class="btn primary" data-action="export">Esporta PDF</button>
+        </section>
+      </section>
+
+      <section id="finanzePage" class="page desktop-only">
+        <section class="card">
+          <h2>Finanze</h2>
+          <p class="muted">Modulo previsto nella fase successiva: entrate, uscite, categorie e saldo mese.</p>
+          <div class="stat-grid small">
+            <div class="stat-card"><span>Entrate</span><strong>€0</strong></div>
+            <div class="stat-card"><span>Uscite</span><strong>€0</strong></div>
+            <div class="stat-card"><span>Saldo</span><strong>€0</strong></div>
+          </div>
+        </section>
+      </section>
+    </main>
+  </section>
 
   <dialog id="settingsDlg">
     <div class="dlg-head"><h3>Impostazioni</h3><button id="closeSettings" class="icon">✕</button></div>
@@ -127,8 +202,10 @@
     <div id="dayDetail"></div>
   </dialog>
 
+
+
   <script>
-    if('serviceWorker' in navigator){window.addEventListener('load',()=>navigator.serviceWorker.register('service-worker_v4.js'));}
+    if('serviceWorker' in navigator){window.addEventListener('load',()=>navigator.serviceWorker.register('service-worker_v5.js'));}
   </script>
   <script src="firebase.js"></script>
   <script src="app.js"></script>
