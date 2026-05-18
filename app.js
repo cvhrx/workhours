@@ -81,7 +81,7 @@ document.addEventListener('DOMContentLoaded', ()=>{
   $('#btnSaveDay').onclick = saveDay;
   $('#btnExportPdf').onclick = exportPdf;
   const tabList = document.getElementById('tabList');
-  if(tabList) tabList.onclick = ()=> switchView('list');
+  if(tabList){ tabList.style.display='none'; }
   const tabCal = document.getElementById('tabCal');
   if(tabCal) tabCal.onclick  = ()=> switchView('cal');
   $('#closeDayDlg').onclick = ()=> $('#dayDlg').close();
