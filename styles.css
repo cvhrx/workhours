@@ -363,3 +363,34 @@ body::before,.sidebar::before{
 .client-main-panel{display:grid;gap:20px}.client-profile-header{display:flex;align-items:center;gap:16px;margin-bottom:18px}.client-avatar{width:64px;height:64px;border-radius:22px;font-size:20px;box-shadow:0 14px 30px rgba(30,42,56,.20)}.client-profile-header h2{margin:6px 0 4px;font-size:26px;color:var(--primary);letter-spacing:-.04em}.client-profile-header p{margin:0}.client-form-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}.client-form-grid .wide{grid-column:span 2}.client-actions{margin-top:4px}
 .client-tariffs-card .card-head{align-items:flex-start}.tar-apply{min-width:240px;margin-bottom:0}.tariff-mode-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px;margin:18px 0}.tariff-mode-card{position:relative;overflow:hidden;border:1px solid var(--line);border-radius:24px;background:linear-gradient(180deg,#fff,#f8fafc);padding:18px;box-shadow:0 14px 32px rgba(15,23,42,.08)}.tariff-mode-card:before{content:"";position:absolute;inset:0 0 auto 0;height:5px;background:var(--primary)}.tariff-mode-card.mode-italy:before{background:#0ea5e9}.tariff-mode-card.mode-abroad:before{background:#6366f1}.tariff-mode-title{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:14px}.tariff-mode-title span{font-size:18px;font-weight:950;color:var(--primary);letter-spacing:-.03em}.tariff-mode-title strong{font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);background:#eef2f7;border-radius:999px;padding:6px 8px;white-space:nowrap}.tariff-mini-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}.tariff-mini-grid .field{margin-bottom:0}.tariff-hint{margin-top:14px;border:1px dashed #d8dee8;border-radius:16px;background:#f8fafc;color:var(--muted);font-weight:750;font-size:13px;line-height:1.45;padding:12px}
 @media(max-width:1200px){.clients-layout{grid-template-columns:1fr}.client-directory-card{position:relative;top:auto}.tariff-mode-grid{grid-template-columns:1fr}.tar-apply{width:100%;min-width:0}.client-form-grid{grid-template-columns:1fr}.client-form-grid .wide{grid-column:auto}}
+
+
+/* STEP 10F - sidebar fissa reale durante lo scroll */
+@media (min-width: 901px){
+  .app-shell{
+    display:grid !important;
+    grid-template-columns:260px minmax(0,1fr) !important;
+    align-items:start !important;
+    min-height:100vh !important;
+  }
+
+  .sidebar.desktop-only{
+    position:fixed !important;
+    left:0 !important;
+    top:0 !important;
+    bottom:0 !important;
+    width:260px !important;
+    height:100vh !important;
+    min-height:100vh !important;
+    overflow-y:auto !important;
+    overflow-x:hidden !important;
+    z-index:50 !important;
+    margin:0 !important;
+  }
+
+  .main-area{
+    grid-column:2 !important;
+    min-width:0 !important;
+    width:100% !important;
+  }
+}
