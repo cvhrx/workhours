@@ -381,9 +381,26 @@ function getNoClientIndex(){
   return (state.clients||[]).findIndex(isEmptyClient);
 }
 
+
+function clientInitials(c, fallback){
+  const name = (c && (c.ragione || c.email || c.piva)) || fallback || 'WH';
+  return String(name).trim().split(/\s+/).slice(0,2).map(s=>s[0]||'').join('').toUpperCase() || 'WH';
+}
+
+function updateClientHero(i){
+  const c = i>=0 ? state.clients?.[i] : null;
+  const nameEl=document.getElementById('clientNameHero');
+  const subEl=document.getElementById('clientSubHero');
+  const avEl=document.getElementById('clientAvatar');
+  if(nameEl) nameEl.textContent = c?.ragione || 'Nuovo cliente';
+  if(subEl) subEl.textContent = c ? ((c.piva ? 'P.IVA: '+c.piva : 'Cliente salvato') + (c.email ? ' · '+c.email : '')) : 'Compila i dati principali e salva.';
+  if(avEl) avEl.textContent = clientInitials(c, 'WH');
+}
+
 function renderClients(){
   const selDay  = document.getElementById('clientSelect'); // usato in Compila giornata (clientIndex numerico)
-  const selSet  = document.getElementById('cliSelect');    // usato in Impostazioni -> Clienti (usa ID Firestore)
+  const selSet  = document.getElementById('cliSelect');    // usato in Clienti (usa ID Firestore)
+  const rowsBox = document.getElementById('clientDirectoryRows');
 
   const real = (state.clients||[]).map((c,i)=>({c,i})).filter(x=>!isEmptyClient(x.c));
 
@@ -396,18 +413,44 @@ function renderClients(){
   if(selDay){ selDay.innerHTML = '<option>—</option>' + optsDay; }
 
   if(selSet){
+    const oldValue = selSet.value;
     selSet.innerHTML = '<option value="-1">➕ Nuovo cliente</option>' + optsSet;
 
-    // robust: re-inject option if some browser strips it
     if(![...selSet.options].some(o=>o.value==='-1')){
       const o=document.createElement('option');
       o.value='-1';
       o.textContent='➕ Nuovo cliente';
       selSet.insertBefore(o, selSet.firstChild);
     }
+    if([...selSet.options].some(o=>o.value===oldValue)) selSet.value = oldValue;
+  }
+
+  if(rowsBox){
+    if(real.length===0){
+      rowsBox.innerHTML = '<div class="client-empty-row">Nessun cliente caricato</div>';
+    }else{
+      rowsBox.innerHTML = real.map(x=>{
+        const c=x.c;
+        const value=String(c.id||x.i);
+        return `<button type="button" class="client-row" data-client-value="${value}">
+          <span class="client-row-avatar">${clientInitials(c,'CL')}</span>
+          <span><strong>${c.ragione || ('Cliente '+(x.i+1))}</strong><em>${c.email || c.piva || 'Dati cliente'}</em></span>
+        </button>`;
+      }).join('');
+      rowsBox.querySelectorAll('[data-client-value]').forEach(btn=>{
+        btn.addEventListener('click',()=>{
+          if(selSet){ selSet.value = btn.dataset.clientValue; }
+          const i=getSelectedClientIndex();
+          if(i>=0) fillClientForm(i); else clearClientForm();
+          rowsBox.querySelectorAll('.client-row').forEach(b=>b.classList.toggle('active', b===btn));
+          updateClientHero(i);
+        });
+      });
+    }
   }
 
   renderTarClientSelect();
+  updateClientHero(getSelectedClientIndex());
 }
 
 function getSelectedClientIndex(){
@@ -430,6 +473,7 @@ function clearClientForm(){
   document.getElementById('cliTel').value = '';
   document.getElementById('cliIndirizzo').value = '';
   document.getElementById('cliSdi').value = '';
+  updateClientHero(-1);
 }
 
 function fillClientForm(i){
@@ -440,6 +484,7 @@ function fillClientForm(i){
   document.getElementById('cliTel').value = c?.tel || '';
   document.getElementById('cliIndirizzo').value = c?.indirizzo || '';
   document.getElementById('cliSdi').value = c?.sdi || '';
+  updateClientHero(i);
 }
 
 function readClientForm(){

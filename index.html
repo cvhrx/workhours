@@ -173,33 +173,93 @@
       </section>
 
       <section id="clientiPage" class="page desktop-only">
-        <div class="split-grid">
-          <section class="card">
-            <div class="card-head"><h2>Clienti</h2><button type="button" class="btn primary" id="btnNewCli">+ Nuovo cliente</button></div>
-            <div class="field"><label>Seleziona cliente</label><select id="cliSelect"></select></div>
-            <div class="client-list-note muted">Seleziona un cliente per modificarlo oppure crea un nuovo cliente.</div>
-          </section>
-          <section class="card">
-            <h2>Scheda cliente</h2>
-            <div class="row two"><div class="field"><label>Ragione Sociale</label><input id="cliRagione"></div><div class="field"><label>P.IVA / CF</label><input id="cliPiva"></div></div>
-            <div class="row two"><div class="field"><label>Email</label><input id="cliEmail"></div><div class="field"><label>Telefono</label><input id="cliTel"></div></div>
-            <div class="row two"><div class="field"><label>Indirizzo</label><input id="cliIndirizzo"></div><div class="field"><label>Codice SDI</label><input id="cliSdi"></div></div>
-            <div class="row gap"><button type="button" class="btn primary" id="btnSaveCli">Salva cliente</button><button type="button" class="btn ghost" id="btnDelCli">Elimina selezionato</button></div>
+        <div class="clients-hero card">
+          <div>
+            <span class="eyebrow">Anagrafica</span>
+            <h2>Clienti e tariffe</h2>
+            <p class="muted">Gestisci clienti, dati di fatturazione e condizioni tariffarie. La logica Locale / Italia / Estero verrà collegata nello step tariffe v2.</p>
+          </div>
+          <button type="button" class="btn primary" id="btnNewCli">+ Nuovo cliente</button>
+        </div>
+
+        <div class="clients-layout">
+          <aside class="card client-directory-card">
+            <div class="card-head stacked-head">
+              <div>
+                <h2>Rubrica clienti</h2>
+                <p class="muted">Seleziona un cliente dalla lista.</p>
+              </div>
+            </div>
+            <div class="field compact-select"><label>Seleziona cliente</label><select id="cliSelect"></select></div>
+            <div id="clientDirectoryRows" class="client-directory-rows">
+              <div class="client-empty-row">Nessun cliente caricato</div>
+            </div>
+          </aside>
+
+          <section class="client-main-panel">
+            <div class="card client-profile-card">
+              <div class="client-profile-header">
+                <div class="client-avatar" id="clientAvatar">WH</div>
+                <div>
+                  <span class="eyebrow">Scheda cliente</span>
+                  <h2 id="clientNameHero">Nuovo cliente</h2>
+                  <p class="muted" id="clientSubHero">Compila i dati principali e salva.</p>
+                </div>
+              </div>
+              <div class="client-form-grid">
+                <div class="field"><label>Ragione sociale</label><input id="cliRagione"></div>
+                <div class="field"><label>P.IVA / CF</label><input id="cliPiva"></div>
+                <div class="field"><label>Email</label><input id="cliEmail"></div>
+                <div class="field"><label>Telefono</label><input id="cliTel"></div>
+                <div class="field wide"><label>Indirizzo</label><input id="cliIndirizzo"></div>
+                <div class="field"><label>Codice SDI</label><input id="cliSdi"></div>
+              </div>
+              <div class="row gap client-actions"><button type="button" class="btn primary" id="btnSaveCli">Salva cliente</button><button type="button" class="btn ghost" id="btnDelCli">Elimina selezionato</button></div>
+            </div>
+
+            <section class="card client-tariffs-card">
+              <div class="card-head">
+                <div>
+                  <span class="eyebrow">Condizioni</span>
+                  <h2>Tariffe cliente</h2>
+                  <p class="muted">Valori attuali collegati al sistema esistente. Sotto trovi già la struttura grafica per Locale, Italia ed Estero.</p>
+                </div>
+                <div class="field tar-apply"><label>Applica a</label><select id="tarClientSelect"><option value="-1">Globali (default)</option></select></div>
+              </div>
+
+              <div class="tariff-mode-grid">
+                <div class="tariff-mode-card mode-local">
+                  <div class="tariff-mode-title"><span>Locale</span><strong>Provincia / zona</strong></div>
+                  <div class="tariff-mini-grid">
+                    <div class="field"><label>€ / h ordinarie</label><input id="tarOrd" inputmode="decimal" value="12"></div>
+                    <div class="field"><label>€ / km</label><input id="tarKm" inputmode="decimal" value="0.40"></div>
+                  </div>
+                  <div class="tariff-hint">Maggiorazioni e nuova logica percentuale saranno collegate nello step tariffe v2.</div>
+                </div>
+
+                <div class="tariff-mode-card mode-italy">
+                  <div class="tariff-mode-title"><span>Trasferta Italia</span><strong>Ore + viaggio</strong></div>
+                  <div class="tariff-mini-grid">
+                    <div class="field"><label>€ / h straordinarie</label><input id="tarStr" inputmode="decimal" value="25"></div>
+                    <div class="field"><label>€ Trasferta</label><input id="tarTrasf" inputmode="decimal" value="50"></div>
+                  </div>
+                  <div class="tariff-hint">Qui verranno separati ore lavoro, ore viaggio e trasferta non lavorata Italia.</div>
+                </div>
+
+                <div class="tariff-mode-card mode-abroad">
+                  <div class="tariff-mode-title"><span>Trasferta Estero</span><strong>Estero / fuori Italia</strong></div>
+                  <div class="tariff-mini-grid">
+                    <div class="field"><label>€ / h straord. festivi</label><input id="tarStrFest" inputmode="decimal" value="35"></div>
+                    <div class="field"><label>€ Pernotto</label><input id="tarPern" inputmode="decimal" value="80"></div>
+                  </div>
+                  <div class="tariff-hint">Qui verranno separati ore estero, viaggio estero e trasferta non lavorata estero.</div>
+                </div>
+              </div>
+
+              <div class="row right"><button type="button" class="btn primary" id="btnSaveTar">Salva tariffe</button></div>
+            </section>
           </section>
         </div>
-        <section class="card">
-          <div class="card-head"><h2>Tariffe cliente</h2><p class="muted">Per ora usa la logica tariffe esistente. La struttura Locale / Italia / Estero arriverà nello step tariffe v2.</p></div>
-          <div class="row"><div class="field"><label>Applica a</label><select id="tarClientSelect"><option value="-1">Globali (default)</option></select></div></div>
-          <div class="tariff-grid">
-            <div class="field"><label>€ / h ordinarie</label><input id="tarOrd" inputmode="decimal" value="12"></div>
-            <div class="field"><label>€ / h straordinarie</label><input id="tarStr" inputmode="decimal" value="25"></div>
-            <div class="field"><label>€ / h straord. festivi</label><input id="tarStrFest" inputmode="decimal" value="35"></div>
-            <div class="field"><label>€ / km</label><input id="tarKm" inputmode="decimal" value="0.40"></div>
-            <div class="field"><label>€ Trasferta</label><input id="tarTrasf" inputmode="decimal" value="50"></div>
-            <div class="field"><label>€ Pernotto</label><input id="tarPern" inputmode="decimal" value="80"></div>
-          </div>
-          <div class="row right"><button type="button" class="btn primary" id="btnSaveTar">Salva tariffe</button></div>
-        </section>
       </section>
 
       <section id="pdfPage" class="page desktop-only">
@@ -308,7 +368,7 @@
 
 
   <script>
-    if('serviceWorker' in navigator){window.addEventListener('load',()=>navigator.serviceWorker.register('service-worker_v10c.js'));}
+    if('serviceWorker' in navigator){window.addEventListener('load',()=>navigator.serviceWorker.register('service-worker_v10d.js'));}
   </script>
   <script src="firebase.js"></script>
   <script src="app.js"></script>
