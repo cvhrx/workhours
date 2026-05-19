@@ -203,11 +203,68 @@
       </section>
 
       <section id="pdfPage" class="page desktop-only">
-        <section class="card">
-          <h2>Riepiloghi / PDF</h2>
+        <section class="card pdf-hero-card">
+          <div class="card-head">
+            <div>
+              <h2>Riepiloghi / PDF</h2>
+              <p class="muted">Genera i report mensili e controlla l’anteprima prima dell’export.</p>
+            </div>
+          </div>
           <div class="pdf-grid">
-            <div class="pdf-box"><h3>PDF Cliente</h3><p class="muted">Esporta il riepilogo per un singolo cliente usando il selettore già esistente.</p><button type="button" class="btn primary" data-action="export">Genera PDF cliente</button></div>
-            <div class="pdf-box"><h3>PDF Mensile / Generale</h3><p class="muted">Esporta il riepilogo mensile di tutti i clienti.</p><button type="button" class="btn ghost" data-action="export">Genera PDF mensile</button></div>
+            <div class="pdf-box pdf-box-primary">
+              <span class="pdf-icon">👤</span>
+              <h3>PDF Cliente</h3>
+              <p class="muted">Report filtrato per cliente con ore, km, trasferte e riepilogo costi.</p>
+              <button type="button" class="btn primary" data-action="export">Genera PDF cliente</button>
+            </div>
+            <div class="pdf-box">
+              <span class="pdf-icon">📅</span>
+              <h3>PDF Mensile / Generale</h3>
+              <p class="muted">Report completo del mese con tutti i clienti e totale generale.</p>
+              <button type="button" class="btn ghost" data-action="export">Genera PDF mensile</button>
+            </div>
+          </div>
+        </section>
+
+        <section class="card pdf-preview-card">
+          <div class="card-head">
+            <div>
+              <h2>Anteprima mese</h2>
+              <p class="muted">Riepilogo rapido dei dati caricati nel mese selezionato.</p>
+            </div>
+            <span class="pdf-month-pill" id="pdfPreviewMonth">—</span>
+          </div>
+
+          <div class="pdf-preview-kpis">
+            <div><span>Ore totali</span><strong id="pdfPreviewOre">0.0h</strong></div>
+            <div><span>KM totali</span><strong id="pdfPreviewKm">0</strong></div>
+            <div><span>Giorni compilati</span><strong id="pdfPreviewGiorni">0</strong></div>
+            <div class="accent"><span>Totale stimato</span><strong id="pdfPreviewTotale">€0,00</strong></div>
+          </div>
+
+          <div class="pdf-preview-layout">
+            <div class="pdf-table-card">
+              <div class="table-title"><h3>Riepilogo clienti</h3><span class="muted">mese corrente</span></div>
+              <div class="pdf-table-scroll">
+                <table class="pdf-preview-table">
+                  <thead>
+                    <tr><th>Cliente</th><th>Ore</th><th>KM</th><th>Stimato</th></tr>
+                  </thead>
+                  <tbody id="pdfClientPreviewRows">
+                    <tr><td colspan="4">Nessun dato disponibile</td></tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+            <div class="pdf-output-card">
+              <h3>Cosa contiene il PDF</h3>
+              <ul>
+                <li>Dettaglio giornaliero del periodo</li>
+                <li>Ore ordinarie e straordinarie</li>
+                <li>KM, trasferte e pernotti</li>
+                <li>Riepilogo finale con totale stimato</li>
+              </ul>
+            </div>
           </div>
         </section>
       </section>
@@ -251,7 +308,7 @@
 
 
   <script>
-    if('serviceWorker' in navigator){window.addEventListener('load',()=>navigator.serviceWorker.register('service-worker_v10b.js'));}
+    if('serviceWorker' in navigator){window.addEventListener('load',()=>navigator.serviceWorker.register('service-worker_v10c.js'));}
   </script>
   <script src="firebase.js"></script>
   <script src="app.js"></script>

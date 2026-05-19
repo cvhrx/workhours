@@ -152,6 +152,44 @@ function updateDashboard(arr){
     const a=total?ord/total*360:0; const b=total?travel/total*360:0;
     donut.style.background=`conic-gradient(var(--primary) 0deg ${a}deg, #38bdf8 ${a}deg ${a+b}deg, #f97316 ${a+b}deg 360deg)`;
   }
+  updatePdfPreview(arr, {ord, str, travel, km, total, filled, stimato});
+}
+
+function updatePdfPreview(arr, summary){
+  const set=(id,val)=>{const el=document.getElementById(id); if(el) el.textContent=val;};
+  const euro=v=>'€'+(v||0).toLocaleString('it-IT',{minimumFractionDigits:2,maximumFractionDigits:2});
+  const dp=document.getElementById('dayPicker');
+  const ym=(dp && dp.value ? dp.value.slice(0,7) : new Date().toISOString().slice(0,7));
+  try{
+    const [yy,mm]=ym.split('-').map(Number);
+    set('pdfPreviewMonth', new Date(yy, mm-1, 1).toLocaleDateString('it-IT',{month:'long',year:'numeric'}));
+  }catch(_){ set('pdfPreviewMonth', ym); }
+  set('pdfPreviewOre', (summary.total||0).toFixed(1)+'h');
+  set('pdfPreviewKm', Math.round(summary.km||0));
+  set('pdfPreviewGiorni', summary.filled?.length || 0);
+  set('pdfPreviewTotale', euro(summary.stimato||0));
+
+  const tbody=document.getElementById('pdfClientPreviewRows');
+  if(!tbody) return;
+  const t=state.tariffs || {ord:0,str:0,km:0};
+  const groups={};
+  (arr||[]).forEach(v=>{
+    const compiled=(v.totalH||0)>0 || (v.ordH||0)>0 || (v.strH||0)>0 || (v.km||0)>0 || v.note;
+    if(!compiled) return;
+    const idx=(v.clientIndex==null ? -1 : v.clientIndex);
+    const name=idx>=0 ? (state.clients?.[idx]?.ragione || ('Cliente '+(idx+1))) : 'Senza cliente';
+    if(!groups[name]) groups[name]={ore:0,km:0,stimato:0};
+    groups[name].ore += (v.totalH||v.ordH||0) + (v.strH||0);
+    groups[name].km += v.km||0;
+    const ct = idx>=0 && state.clients?.[idx]?.tariffs ? state.clients[idx].tariffs : t;
+    groups[name].stimato += (v.ordH||0)*(ct.ord||0) + (v.strH||0)*(ct.str||0) + (v.km||0)*(ct.km||0);
+  });
+  const rows=Object.entries(groups).sort((a,b)=>b[1].stimato-a[1].stimato);
+  if(!rows.length){
+    tbody.innerHTML='<tr><td colspan="4">Nessun dato disponibile</td></tr>';
+    return;
+  }
+  tbody.innerHTML=rows.map(([name,g])=>`<tr><td>${name}</td><td>${g.ore.toFixed(1)}h</td><td>${Math.round(g.km)}</td><td>${euro(g.stimato)}</td></tr>`).join('');
 }
 
 function setTariffInputs(t){
