@@ -74,21 +74,12 @@
       </header>
 
       <section id="dashboardPage" class="page page-active desktop-only">
-        <div class="page-headline">
-          <div>
-            <h2>Dashboard</h2>
-            <p class="muted">Riepilogo mensile rapido di ore, chilometri e valore stimato.</p>
-          </div>
-          <div class="field month-field"><label>Mese</label><input type="month" id="dashboardMonth"></div>
-        </div>
-
-        <div class="stat-grid dash-metric-grid">
+        <div class="stat-grid">
           <div class="stat-card"><span>Ore mese</span><strong id="dashOreMese">0h</strong></div>
           <div class="stat-card"><span>KM mese</span><strong id="dashKmMese">0</strong></div>
-          <div class="stat-card stat-card-primary"><span>Totale stimato</span><strong id="dashTotaleMese">€0</strong></div>
-          <button type="button" class="stat-card stat-action-card" data-page-jump="rapportiniPage"><span>Rapportino</span><strong>+ Nuovo</strong></button>
+          <div class="stat-card"><span>Giornate compilate</span><strong id="dashGiornate">0</strong></div>
+          <div class="stat-card"><span>Clienti</span><strong id="dashClienti">0</strong></div>
         </div>
-
         <div class="dashboard-grid">
           <section class="card dash-card">
             <div class="card-head"><h2>Riepilogo ore mese</h2></div>
@@ -103,7 +94,7 @@
           </section>
           <section class="card dash-card">
             <h2>Vista rapida</h2>
-            <p class="muted">Il grafico segue il mese selezionato. Per inserire o modificare ore vai su Rapportini.</p>
+            <p class="muted">Qui trovi il riepilogo del mese. La compilazione resta nella sezione Rapportini.</p>
             <div class="mini-summary">
               <div><span>Ordinarie</span><strong id="dashOrdMini">0h</strong></div>
               <div><span>Straordinarie</span><strong id="dashStrMini">0h</strong></div>
@@ -150,20 +141,7 @@
       </section>
 
       <section id="calendarioPage" class="page desktop-only">
-        <div class="calendar-layout">
-          <section class="card calendar-card">
-            <div class="card-head">
-              <div><h2>Calendario</h2><p class="muted">Blu compilato · giallo bozza · grigio vuoto</p></div>
-              <div class="field month-field"><label>Mese</label><input type="month" id="calendarMonth"></div>
-            </div>
-            <div id="calGrid" class="cal-grid cal-grid-clean"></div>
-          </section>
-          <aside class="card calendar-detail-card" id="calendarDetail">
-            <h2>Dettaglio giorno</h2>
-            <p class="muted">Seleziona una data dal calendario per vedere il riepilogo.</p>
-            <div class="calendar-empty-state">Nessun giorno selezionato</div>
-          </aside>
-        </div>
+        <section id="calView" class="card"><div id="calGrid" class="cal-grid"></div></section>
       </section>
 
       <section id="clientiPage" class="page desktop-only">
@@ -198,23 +176,11 @@
 
       <section id="pdfPage" class="page desktop-only">
         <section class="card">
-          <div class="card-head">
-            <div><h2>Riepiloghi / PDF</h2><p class="muted">Genera i PDF e controlla una preview sintetica del mese.</p></div>
-            <div class="field month-field"><label>Mese</label><input type="month" id="pdfMonth"></div>
-          </div>
+          <h2>Riepiloghi / PDF</h2>
           <div class="pdf-grid">
             <div class="pdf-box"><h3>PDF Cliente</h3><p class="muted">Esporta il riepilogo per un singolo cliente usando il selettore già esistente.</p><button type="button" class="btn primary" data-action="export">Genera PDF cliente</button></div>
             <div class="pdf-box"><h3>PDF Mensile / Generale</h3><p class="muted">Esporta il riepilogo mensile di tutti i clienti.</p><button type="button" class="btn ghost" data-action="export">Genera PDF mensile</button></div>
           </div>
-        </section>
-        <section class="card pdf-preview-card">
-          <div class="card-head"><h2>Preview mese</h2><p class="muted">Riepilogo calcolato dai rapportini del mese selezionato.</p></div>
-          <div class="stat-grid small">
-            <div class="stat-card"><span>Ore totali</span><strong id="pdfPrevOre">0h</strong></div>
-            <div class="stat-card"><span>KM</span><strong id="pdfPrevKm">0</strong></div>
-            <div class="stat-card stat-card-primary"><span>Totale stimato</span><strong id="pdfPrevTotale">€0</strong></div>
-          </div>
-          <div id="pdfPreviewRows" class="pdf-preview-list"></div>
         </section>
       </section>
 
@@ -257,7 +223,7 @@
 
 
   <script>
-    if('serviceWorker' in navigator){window.addEventListener('load',()=>navigator.serviceWorker.register('service-worker_v10.js'));}
+    if('serviceWorker' in navigator){window.addEventListener('load',()=>navigator.serviceWorker.register('service-worker_v9.js'));}
   </script>
   <script src="firebase.js"></script>
   <script src="app.js"></script>

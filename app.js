@@ -110,9 +110,9 @@ function showMainPage(pageId){
   document.querySelectorAll('.nav-item').forEach(b=>b.classList.toggle('active', b.dataset.page===pageId));
   const titles={dashboardPage:'Dashboard',rapportiniPage:'Rapportini',calendarioPage:'Calendario',clientiPage:'Clienti',pdfPage:'Riepiloghi / PDF',finanzePage:'Finanze',settingsPage:'Impostazioni'};
   const title=document.getElementById('pageTitle'); if(title) title.textContent=titles[pageId]||'WorkHours';
-  if(pageId==='calendarioPage' || pageId==='dashboardPage' || pageId==='pdfPage'){
-    const month = getCurrentMonthForPage(pageId);
-    if(month && typeof loadMonth==='function') loadMonth(month);
+  if(pageId==='calendarioPage'){
+    const dp=document.getElementById('dayPicker');
+    if(dp && dp.value && typeof loadMonth==='function') loadMonth(dp.value.slice(0,7));
   }
 }
 
@@ -125,69 +125,27 @@ function syncMobileDate(){
   d.addEventListener('change',()=>{ m.value=d.value; });
 }
 
-function getCurrentMonthForPage(pageId){
-  const dp=document.getElementById('dayPicker');
-  const base=(dp && dp.value) ? dp.value.slice(0,7) : new Date().toISOString().slice(0,7);
-  const map={dashboardPage:'dashboardMonth',calendarioPage:'calendarMonth',pdfPage:'pdfMonth'};
-  const id=map[pageId];
-  const el=id ? document.getElementById(id) : null;
-  return (el && el.value) ? el.value : base;
-}
-
-function setMonthControls(month){
-  ['dashboardMonth','calendarMonth','pdfMonth'].forEach(id=>{
-    const el=document.getElementById(id);
-    if(el && !el.value) el.value=month;
-  });
-}
-
-function initMonthControls(){
-  ['dashboardMonth','calendarMonth','pdfMonth'].forEach(id=>{
-    const el=document.getElementById(id);
-    if(!el) return;
-    el.onchange=async ()=>{
-      const month=el.value || new Date().toISOString().slice(0,7);
-      ['dashboardMonth','calendarMonth','pdfMonth'].forEach(other=>{ const o=document.getElementById(other); if(o) o.value=month; });
-      await loadMonth(month);
-    };
-  });
-}
-
-function estimateDayTotal(v){
-  const t=state.tariffs || {ord:0,str:0,strFest:0,km:0,trasf:0,pern:0};
-  return (v.ordH||0)*(t.ord||0) + (v.strH||0)*(t.str||0) + (v.strFestH||0)*(t.strFest||0) + (v.km||0)*(t.km||0) + (v.trasf? (t.trasf||0):0) + (v.pern? (t.pern||0):0);
-}
-
 function updateDashboard(arr){
   const filled=arr.filter(v=>(v.totalH||0)>0 || (v.km||0)>0 || v.note);
   const ord=arr.reduce((s,v)=>s+(v.ordH||0),0);
   const str=arr.reduce((s,v)=>s+(v.strH||0),0);
   const travel=arr.reduce((s,v)=>s+(v.travelH||0),0);
   const km=arr.reduce((s,v)=>s+(v.km||0),0);
-  const totaleStimato=arr.reduce((s,v)=>s+estimateDayTotal(v),0);
   const total=ord+str+travel;
   const set=(id,val)=>{const el=document.getElementById(id); if(el) el.textContent=val;};
   set('dashOreMese', total.toFixed(1)+'h');
   set('dashKmMese', Math.round(km));
-  set('dashTotaleMese', '€'+totaleStimato.toFixed(2));
   set('dashGiornate', filled.length);
   set('dashClienti', (state.clients||[]).filter(c=>!isEmptyClient(c)).length);
   set('dashOrd', ord.toFixed(1)+'h');
   set('dashStr', str.toFixed(1)+'h');
   set('dashTravel', travel.toFixed(1)+'h');
-  set('dashOrdMini', ord.toFixed(1)+'h');
-  set('dashStrMini', str.toFixed(1)+'h');
-  set('dashTravelMini', travel.toFixed(1)+'h');
   set('dashDonutTotal', total.toFixed(1)+'h');
-  set('pdfPrevOre', total.toFixed(1)+'h');
-  set('pdfPrevKm', Math.round(km));
-  set('pdfPrevTotale', '€'+totaleStimato.toFixed(2));
   const donut=document.getElementById('dashDonut');
   if(donut){
     const a=total?ord/total*360:0; const b=total?travel/total*360:0;
     donut.style.background=`conic-gradient(var(--primary) 0deg ${a}deg, #38bdf8 ${a}deg ${a+b}deg, #f97316 ${a+b}deg 360deg)`;
   }
-  updatePdfPreview(arr);
 }
 
 function setTariffInputs(t){
@@ -330,7 +288,6 @@ async function initApp(){
   syncMobileDate();
   dp.addEventListener('change', async e=>{
     await loadDay(e.target.value);
-    setMonthControls(e.target.value.slice(0,7));
     await loadMonth(e.target.value.slice(0,7));
   });
 
@@ -640,68 +597,20 @@ async function loadMonth(yyyyMM){
   if(grid){
     const firstDay = new Date(y, m-1, 1);
     const offset = (firstDay.getDay()+6)%7;
-    for(let i=0;i<offset;i++){ const empty=document.createElement('div'); empty.className='day empty'; grid.appendChild(empty); }
+    for(let i=0;i<offset;i++){ const empty=document.createElement('div'); empty.className='day'; grid.appendChild(empty); }
     arr.forEach(v=>{
       const dNum = Number(v.id.slice(-2));
-      const cell=document.createElement('div'); cell.className='day calendar-day'; cell.dataset.date=v.id;
-      const has=dayHasData(v);
-      const isDraft=!has && !!v.note;
-      const status=has?'compiled':(isDraft?'draft':'empty');
-      cell.innerHTML = `<div class="cal-day-number">${dNum}</div><div class="cal-status-dot ${status}"></div>`;
-      cell.onclick = ()=>{
-        document.querySelectorAll('.calendar-day').forEach(c=>c.classList.remove('selected'));
-        cell.classList.add('selected');
-        updateCalendarDetail(v);
-      };
+      const cell=document.createElement('div'); cell.className='day'; cell.dataset.date=v.id;
+      cell.innerHTML = `<strong>${dNum}</strong><div class="bar"></div>
+        <div><span class="badge ok">${(v.ordH||0).toFixed(1)}h</span> <span class="badge warn">${(v.strH||0).toFixed(1)}h</span></div>`;
+      const bar = cell.querySelector('.bar');
+      const s1=document.createElement('span'); s1.className='seg ord'; s1.style.width=Math.min(100,Math.round((v.ordH||0)/8*100))+'%';
+      const s2=document.createElement('span'); s2.className='seg str'; s2.style.width=Math.min(100,Math.round((v.strH||0)/8*100))+'%';
+      bar.appendChild(s1); bar.appendChild(s2);
+      cell.onclick = ()=> showDayDetail(v);
       grid.appendChild(cell);
     });
   }
-}
-
-function dayHasData
-function dayHasData(v){
-  return !!((v.totalH||0)>0 || (v.ordH||0)>0 || (v.strH||0)>0 || (v.km||0)>0 || v.note || v.trasf || v.pern);
-}
-
-function updateCalendarDetail(v){
-  const box=document.getElementById('calendarDetail');
-  if(!box) return;
-  const cli=(state.clients||[])[v.clientIndex]?.ragione || '—';
-  const has=dayHasData(v);
-  box.innerHTML=`
-    <div class="card-head"><div><h2>${fmtIT(v.id)}</h2><p class="muted">${has?'Giornata compilata':'Giornata vuota'}</p></div></div>
-    <div class="detail-list">
-      <div><span>Cliente</span><strong>${cli}</strong></div>
-      <div><span>Orari</span><strong>${v.in1||'-'} / ${v.out1||'-'} · ${v.in2||'-'} / ${v.out2||'-'}</strong></div>
-      <div><span>Ore ordinarie</span><strong>${(v.ordH||0).toFixed(2)}h</strong></div>
-      <div><span>Straordinarie</span><strong>${(v.strH||0).toFixed(2)}h</strong></div>
-      <div><span>KM</span><strong>${v.km||0}</strong></div>
-      <div><span>Note</span><strong>${v.note||'—'}</strong></div>
-    </div>
-    <button type="button" class="btn primary" id="btnEditCalendarDay">Modifica</button>
-  `;
-  const btn=document.getElementById('btnEditCalendarDay');
-  if(btn){ btn.onclick=async ()=>{ const dp=document.getElementById('dayPicker'); if(dp){ dp.value=v.id; await loadDay(v.id); } showMainPage('rapportiniPage'); }; }
-}
-
-function updatePdfPreview(arr){
-  const el=document.getElementById('pdfPreviewRows');
-  if(!el) return;
-  const groups={};
-  arr.filter(dayHasData).forEach(v=>{
-    const name=(state.clients||[])[v.clientIndex]?.ragione || 'Senza cliente';
-    if(!groups[name]) groups[name]={ore:0,km:0,tot:0,days:0};
-    groups[name].ore+=(v.ordH||0)+(v.strH||0)+(v.travelH||0);
-    groups[name].km+=(v.km||0);
-    groups[name].tot+=estimateDayTotal(v);
-    groups[name].days+=1;
-  });
-  const rows=Object.entries(groups).sort((a,b)=>b[1].tot-a[1].tot).slice(0,8);
-  if(!rows.length){
-    el.innerHTML='<div class="empty-preview">Nessun rapportino nel mese selezionato.</div>';
-    return;
-  }
-  el.innerHTML=rows.map(([name,g])=>`<div class="preview-row"><div><strong>${name}</strong><span>${g.days} giorni · ${g.ore.toFixed(1)}h</span></div><div><span>${Math.round(g.km)} km</span><strong>€${g.tot.toFixed(2)}</strong></div></div>`).join('');
 }
 
 function showDayDetail(v){
