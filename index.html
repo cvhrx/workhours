@@ -74,11 +74,18 @@
       </header>
 
       <section id="dashboardPage" class="page page-active desktop-only">
-        <div class="stat-grid">
+        <div class="dashboard-toolbar card compact-card">
+          <div>
+            <h2>Andamento mese</h2>
+            <p class="muted">Seleziona il mese per aggiornare riepilogo e grafico.</p>
+          </div>
+          <div class="field month-field"><label>Mese</label><input type="month" id="dashMonth"></div>
+        </div>
+        <div class="stat-grid dash-kpi-grid">
           <div class="stat-card"><span>Ore mese</span><strong id="dashOreMese">0h</strong></div>
           <div class="stat-card"><span>KM mese</span><strong id="dashKmMese">0</strong></div>
-          <div class="stat-card"><span>Giornate compilate</span><strong id="dashGiornate">0</strong></div>
-          <div class="stat-card"><span>Clienti</span><strong id="dashClienti">0</strong></div>
+          <div class="stat-card stat-card-accent"><span>Totale stimato</span><strong id="dashTotaleStimato">€0,00</strong></div>
+          <button type="button" class="stat-card stat-card-action" data-page-jump="rapportiniPage"><span>Azione rapida</span><strong>+ Nuovo rapportino</strong></button>
         </div>
         <div class="dashboard-grid">
           <section class="card dash-card">
@@ -223,7 +230,7 @@
 
 
   <script>
-    if('serviceWorker' in navigator){window.addEventListener('load',()=>navigator.serviceWorker.register('service-worker_v9.js'));}
+    if('serviceWorker' in navigator){window.addEventListener('load',()=>navigator.serviceWorker.register('service-worker_v10a.js'));}
   </script>
   <script src="firebase.js"></script>
   <script src="app.js"></script>

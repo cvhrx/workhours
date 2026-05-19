@@ -132,15 +132,21 @@ function updateDashboard(arr){
   const travel=arr.reduce((s,v)=>s+(v.travelH||0),0);
   const km=arr.reduce((s,v)=>s+(v.km||0),0);
   const total=ord+str+travel;
+  const t=state.tariffs || {ord:0,str:0,km:0,trasf:0,pern:0};
+  const stimato = (ord*(t.ord||0)) + (str*(t.str||0)) + (km*(t.km||0));
   const set=(id,val)=>{const el=document.getElementById(id); if(el) el.textContent=val;};
   set('dashOreMese', total.toFixed(1)+'h');
   set('dashKmMese', Math.round(km));
   set('dashGiornate', filled.length);
   set('dashClienti', (state.clients||[]).filter(c=>!isEmptyClient(c)).length);
+  set('dashTotaleStimato', '€' + stimato.toLocaleString('it-IT',{minimumFractionDigits:2,maximumFractionDigits:2}));
   set('dashOrd', ord.toFixed(1)+'h');
   set('dashStr', str.toFixed(1)+'h');
   set('dashTravel', travel.toFixed(1)+'h');
   set('dashDonutTotal', total.toFixed(1)+'h');
+  set('dashOrdMini', ord.toFixed(1)+'h');
+  set('dashStrMini', str.toFixed(1)+'h');
+  set('dashTravelMini', travel.toFixed(1)+'h');
   const donut=document.getElementById('dashDonut');
   if(donut){
     const a=total?ord/total*360:0; const b=total?travel/total*360:0;
@@ -289,7 +295,23 @@ async function initApp(){
   dp.addEventListener('change', async e=>{
     await loadDay(e.target.value);
     await loadMonth(e.target.value.slice(0,7));
+    const dm=document.getElementById('dashMonth');
+    if(dm) dm.value=e.target.value.slice(0,7);
   });
+
+  const dm=document.getElementById('dashMonth');
+  if(dm){
+    dm.value=dp.value.slice(0,7);
+    dm.onchange=async ()=>{
+      if(!dm.value) return;
+      const day=dm.value+'-01';
+      dp.value=day;
+      const mobile=document.getElementById('dayPickerMobile');
+      if(mobile) mobile.value=day;
+      await loadDay(day);
+      await loadMonth(dm.value);
+    };
+  }
 
   await loadDay(dp.value);
   await loadMonth(dp.value.slice(0,7));
