@@ -60,10 +60,10 @@
         <button class="nav-item active" data-page="dashboardPage">Dashboard</button>
         <button class="nav-item" data-page="rapportiniPage">Rapportini</button>
         <button class="nav-item" data-page="calendarioPage">Calendario</button>
-        <button class="nav-item" data-page="clientiPage">Clienti</button>
+        <button class="nav-item" data-action="clients">Clienti</button>
         <button class="nav-item" data-page="pdfPage">Riepiloghi / PDF</button>
         <button class="nav-item" data-page="finanzePage">Finanze</button>
-        <button class="nav-item" data-page="settingsPage">Impostazioni</button>
+        <button class="nav-item" data-action="settings">Impostazioni</button>
       </nav>
     </aside>
 
@@ -82,7 +82,7 @@
         </div>
         <div class="dashboard-grid">
           <section class="card dash-card">
-            <div class="card-head"><h2>Riepilogo ore mese</h2></div>
+            <div class="card-head"><h2>Riepilogo ore mese</h2><button type="button" class="btn primary" data-page-jump="rapportiniPage">+ Nuovo rapportino</button></div>
             <div class="donut-wrap">
               <div class="donut" id="dashDonut"><span id="dashDonutTotal">0h</span></div>
               <div class="legend">
@@ -93,12 +93,11 @@
             </div>
           </section>
           <section class="card dash-card">
-            <h2>Vista rapida</h2>
-            <p class="muted">Qui trovi il riepilogo del mese. La compilazione resta nella sezione Rapportini.</p>
-            <div class="mini-summary">
-              <div><span>Ordinarie</span><strong id="dashOrdMini">0h</strong></div>
-              <div><span>Straordinarie</span><strong id="dashStrMini">0h</strong></div>
-              <div><span>Viaggio</span><strong id="dashTravelMini">0h</strong></div>
+            <h2>Azioni rapide</h2>
+            <div class="quick-actions">
+              <button class="btn primary" data-page-jump="rapportiniPage">Compila giornata</button>
+              <button class="btn ghost" data-action="export">Esporta PDF</button>
+              <button class="btn ghost" data-action="clients">Gestisci clienti</button>
             </div>
           </section>
         </div>
@@ -110,7 +109,7 @@
         </div>
         <section class="card" id="compileCard">
           <div class="mobile-brand mobile-only"><img src="assets/logo-workhours-light.png" alt="WorkHours"></div>
-          <div class="card-head"><h2>Segna ore</h2><button type="button" class="btn ghost desktop-only" id="btnDupYesterday">Duplica ieri</button></div>
+          <h2>Segna ore</h2>
           <div class="field mobile-only"><label>Giorno</label><input type="date" id="dayPickerMobile" aria-label="Giorno mobile"></div>
           <div class="grid-2">
             <div class="row two tight">
@@ -138,83 +137,65 @@
             <button type="button" class="btn ghost mobile-only" id="btnLogoutMobile">Logout</button>
           </div>
         </section>
-        <section id="listView" class="card desktop-only"></section>
+        <div class="card row tabs desktop-only">
+          
+          <button id="tabCal" class="chip">Calendario</button>
+        </div>
+        
       </section>
 
       <section id="calendarioPage" class="page desktop-only">
         <section id="calView" class="card"><div id="calGrid" class="cal-grid"></div></section>
       </section>
 
-      <section id="clientiPage" class="page desktop-only">
-        <div class="split-grid">
-          <section class="card">
-            <div class="card-head"><h2>Clienti</h2><button type="button" class="btn primary" id="btnNewCli">+ Nuovo cliente</button></div>
-            <div class="field"><label>Seleziona cliente</label><select id="cliSelect"></select></div>
-            <div class="client-list-note muted">Seleziona un cliente per modificarlo oppure crea un nuovo cliente.</div>
-          </section>
-          <section class="card">
-            <h2>Scheda cliente</h2>
-            <div class="row two"><div class="field"><label>Ragione Sociale</label><input id="cliRagione"></div><div class="field"><label>P.IVA / CF</label><input id="cliPiva"></div></div>
-            <div class="row two"><div class="field"><label>Email</label><input id="cliEmail"></div><div class="field"><label>Telefono</label><input id="cliTel"></div></div>
-            <div class="row two"><div class="field"><label>Indirizzo</label><input id="cliIndirizzo"></div><div class="field"><label>Codice SDI</label><input id="cliSdi"></div></div>
-            <div class="row gap"><button type="button" class="btn primary" id="btnSaveCli">Salva cliente</button><button type="button" class="btn ghost" id="btnDelCli">Elimina selezionato</button></div>
-          </section>
-        </div>
-        <section class="card">
-          <div class="card-head"><h2>Tariffe cliente</h2><p class="muted">Per ora usa la logica tariffe esistente. La struttura Locale / Italia / Estero arriverà nello step tariffe v2.</p></div>
-          <div class="row"><div class="field"><label>Applica a</label><select id="tarClientSelect"><option value="-1">Globali (default)</option></select></div></div>
-          <div class="tariff-grid">
-            <div class="field"><label>€ / h ordinarie</label><input id="tarOrd" inputmode="decimal" value="12"></div>
-            <div class="field"><label>€ / h straordinarie</label><input id="tarStr" inputmode="decimal" value="25"></div>
-            <div class="field"><label>€ / h straord. festivi</label><input id="tarStrFest" inputmode="decimal" value="35"></div>
-            <div class="field"><label>€ / km</label><input id="tarKm" inputmode="decimal" value="0.40"></div>
-            <div class="field"><label>€ Trasferta</label><input id="tarTrasf" inputmode="decimal" value="50"></div>
-            <div class="field"><label>€ Pernotto</label><input id="tarPern" inputmode="decimal" value="80"></div>
-          </div>
-          <div class="row right"><button type="button" class="btn primary" id="btnSaveTar">Salva tariffe</button></div>
-        </section>
-      </section>
-
       <section id="pdfPage" class="page desktop-only">
         <section class="card">
           <h2>Riepiloghi / PDF</h2>
-          <div class="pdf-grid">
-            <div class="pdf-box"><h3>PDF Cliente</h3><p class="muted">Esporta il riepilogo per un singolo cliente usando il selettore già esistente.</p><button type="button" class="btn primary" data-action="export">Genera PDF cliente</button></div>
-            <div class="pdf-box"><h3>PDF Mensile / Generale</h3><p class="muted">Esporta il riepilogo mensile di tutti i clienti.</p><button type="button" class="btn ghost" data-action="export">Genera PDF mensile</button></div>
-          </div>
+          <p class="muted">In questa prima fase usiamo l'export PDF già esistente.</p>
+          <button type="button" class="btn primary" data-action="export">Esporta PDF</button>
         </section>
       </section>
 
       <section id="finanzePage" class="page desktop-only">
-        <div class="stat-grid small">
-          <div class="stat-card"><span>Entrate</span><strong>€0</strong></div>
-          <div class="stat-card"><span>Uscite</span><strong>€0</strong></div>
-          <div class="stat-card"><span>Saldo</span><strong>€0</strong></div>
-        </div>
-        <section class="card finance-layout">
-          <div>
-            <h2>Finanze</h2>
-            <p class="muted">Modulo separato da rapportini e ore. Qui gestirai entrate, uscite e categorie.</p>
-            <div class="finance-actions"><button class="btn primary" type="button">+ Entrata</button><button class="btn ghost" type="button">+ Uscita</button></div>
-          </div>
-          <div class="finance-donut"><span>€0</span></div>
-        </section>
-        <section class="card"><h2>Categorie</h2><div class="category-pills"><span>Carburante</span><span>Spesa</span><span>Affitto</span><span>Ristoranti</span><span>Svago</span><span>Commercialista</span><span>Attrezzatura</span><span>Software</span><span>Altro</span></div></section>
-      </section>
-
-      <section id="settingsPage" class="page desktop-only">
         <section class="card">
-          <h2>Impostazioni</h2>
-          <div class="settings-grid">
-            <div class="setting-box"><h3>Dati azienda</h3><p class="muted">Gestione dati aziendali. Verrà collegata nello step successivo.</p></div>
-            <div class="setting-box"><h3>Tariffe globali</h3><p class="muted">Le tariffe globali sono gestibili dalla pagina Clienti → Tariffe.</p></div>
-            <div class="setting-box"><h3>Backup / Ripristino</h3><p class="muted">Area prevista per export e sicurezza dati.</p></div>
-            <div class="setting-box"><h3>Migrazione WorkHours v2</h3><p class="muted">Qui verrà inserito il pulsante Importa clienti e tariffe.</p></div>
+          <h2>Finanze</h2>
+          <p class="muted">Modulo previsto nella fase successiva: entrate, uscite, categorie e saldo mese.</p>
+          <div class="stat-grid small">
+            <div class="stat-card"><span>Entrate</span><strong>€0</strong></div>
+            <div class="stat-card"><span>Uscite</span><strong>€0</strong></div>
+            <div class="stat-card"><span>Saldo</span><strong>€0</strong></div>
           </div>
         </section>
       </section>
     </main>
   </section>
+
+  <dialog id="settingsDlg">
+    <div class="dlg-head"><h3>Impostazioni</h3><button id="closeSettings" class="icon">✕</button></div>
+    <div class="dlg-tabs"><button id="tabCli" class="chip">Clienti</button><button id="tabTar" class="chip active">Tariffe</button></div>
+    <div id="paneTariffe">
+      <div class="row two">
+        <div class="field"><label>€ / h ordinarie</label><input id="tarOrd" inputmode="decimal" value="12"></div>
+        <div class="field"><label>€ / h straordinarie</label><input id="tarStr" inputmode="decimal" value="25"></div>
+      </div>
+      <div class="row"><div class="field"><label>€ / h straord. festivi</label><input id="tarStrFest" inputmode="decimal" value="35"></div></div>
+      <div class="row two">
+        <div class="field"><label>€ / km</label><input id="tarKm" inputmode="decimal" value="0.40"></div>
+        <div class="field"><label>€ Trasferta (gg)</label><input id="tarTrasf" inputmode="decimal" value="50"></div>
+      </div>
+      <div class="row"><div class="field"><label>€ Pernotto (nt)</label><input id="tarPern" inputmode="decimal" value="80"></div></div>
+      <div class="row"><div class="field"><label>Applica a</label><select id="tarClientSelect"><option value="-1">Globali (default)</option></select></div></div>
+      <div class="row right"><button type="button" class="btn primary" id="btnSaveTar">Salva tariffe</button></div>
+    </div>
+    <div id="paneClienti" class="hidden">
+      <div class="row two"><div class="field"><label>Ragione Sociale</label><input id="cliRagione"></div><div class="field"><label>P.IVA / CF</label><input id="cliPiva"></div></div>
+      <div class="row two"><div class="field"><label>Email</label><input id="cliEmail"></div><div class="field"><label>Telefono</label><input id="cliTel"></div></div>
+      <div class="row two"><div class="field"><label>Indirizzo</label><input id="cliIndirizzo"></div><div class="field"><label>Codice SDI</label><input id="cliSdi"></div></div>
+      <div class="row gap"><button type="button" class="btn primary" id="btnAddCli" class="hidden">Aggiungi cliente</button><button type="button" class="btn ghost" id="btnDelCli">Elimina selezionato</button></div>
+      <div class="field"><label>Seleziona cliente</label><select id="cliSelect"></select></div>
+      <div class="row right"><button type="button" class="btn primary" id="btnSaveCli">Salva cliente</button></div>
+    </div>
+  </dialog>
 
   <dialog id="dayDlg">
     <div class="dlg-head"><h3>Dettaglio giornata</h3><button id="closeDayDlg" class="icon">✕</button></div>
@@ -224,7 +205,7 @@
 
 
   <script>
-    if('serviceWorker' in navigator){window.addEventListener('load',()=>navigator.serviceWorker.register('service-worker_v6.js'));}
+    if('serviceWorker' in navigator){window.addEventListener('load',()=>navigator.serviceWorker.register('service-worker_v5.js'));}
   </script>
   <script src="firebase.js"></script>
   <script src="app.js"></script>

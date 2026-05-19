@@ -55,35 +55,22 @@ document.addEventListener('DOMContentLoaded', ()=>{
 
   $('#chipTrasf').onclick = ()=> $('#chipTrasf').classList.toggle('active');
   $('#chipPern').onclick  = ()=> $('#chipPern').classList.toggle('active');
-  const settingsBtn = document.getElementById('btnSettings');
-  if(settingsBtn) settingsBtn.onclick = ()=> showMainPage('settingsPage');
-  const closeSettings = document.getElementById('closeSettings');
-  if(closeSettings) closeSettings.onclick = ()=> document.getElementById('settingsDlg')?.close();
-  const tabTar = document.getElementById('tabTar');
-  if(tabTar) tabTar.onclick = ()=> togglePane('Tar');
-  const tabCli = document.getElementById('tabCli');
-  if(tabCli) tabCli.onclick = ()=> togglePane('Cli');
-  const saveTarBtn = document.getElementById('btnSaveTar');
-  if(saveTarBtn) saveTarBtn.onclick = saveTariffs;
+  $('#btnSettings').onclick = ()=> $('#settingsDlg').showModal();
+  $('#closeSettings').onclick = ()=> $('#settingsDlg').close();
+  $('#tabTar').onclick = ()=> togglePane('Tar');
+  $('#tabCli').onclick = ()=> togglePane('Cli');
+  $('#btnSaveTar').onclick = saveTariffs;
   const tsel = document.getElementById('tarClientSelect');
   if(tsel){ tsel.onchange = ()=> loadTariffsSelection(); }
 
   const addBtn = document.getElementById('btnAddCli');
   if(addBtn) addBtn.classList.add('hidden');
-  const delCliBtn = document.getElementById('btnDelCli');
-  if(delCliBtn) delCliBtn.onclick = delClient;
-  const saveCliBtn = document.getElementById('btnSaveCli');
-  if(saveCliBtn) saveCliBtn.onclick = saveClientUpsert;
-  const newCliBtn = document.getElementById('btnNewCli');
-  if(newCliBtn) newCliBtn.onclick = ()=>{ const sel=document.getElementById('cliSelect'); if(sel) sel.value='-1'; clearClientForm(); };
-  const dupBtn = document.getElementById('btnDupYesterday');
-  if(dupBtn) dupBtn.onclick = duplicateYesterday;
+  $('#btnDelCli').onclick = delClient;
+  $('#btnSaveCli').onclick = saveClientUpsert;
   $('#btnSaveDay').onclick = saveDay;
   $('#btnExportPdf').onclick = exportPdf;
-  const tabList = document.getElementById('tabList');
-  if(tabList){ tabList.style.display='none'; }
-  const tabCal = document.getElementById('tabCal');
-  if(tabCal) tabCal.onclick  = ()=> switchView('cal');
+  // list view removed
+  $('#tabCal').onclick  = ()=> switchView('cal');
   $('#closeDayDlg').onclick = ()=> $('#dayDlg').close();
   initShellNav();
 });
@@ -95,8 +82,11 @@ function initShellNav(){
   document.querySelectorAll('[data-page-jump]').forEach(btn=>{
     btn.addEventListener('click',()=>showMainPage(btn.dataset.pageJump));
   });
-  document.querySelectorAll('[data-action="settings"]').forEach(btn=>btn.addEventListener('click',()=>showMainPage('settingsPage')));
-  document.querySelectorAll('[data-action="clients"]').forEach(btn=>btn.addEventListener('click',()=>showMainPage('clientiPage')));
+  document.querySelectorAll('[data-action="settings"]').forEach(btn=>btn.addEventListener('click',()=>$('#settingsDlg')?.showModal()));
+  document.querySelectorAll('[data-action="clients"]').forEach(btn=>btn.addEventListener('click',()=>{
+    $('#settingsDlg')?.showModal();
+    if(typeof togglePane==='function') togglePane('Cli');
+  }));
   document.querySelectorAll('[data-action="export"]').forEach(btn=>btn.addEventListener('click',()=>exportPdf()));
   const logout = ()=> auth.signOut();
   const b1=document.getElementById('btnLogout'); if(b1) b1.onclick=logout;
@@ -108,7 +98,7 @@ function showMainPage(pageId){
   const p=document.getElementById(pageId);
   if(p) p.classList.add('page-active');
   document.querySelectorAll('.nav-item').forEach(b=>b.classList.toggle('active', b.dataset.page===pageId));
-  const titles={dashboardPage:'Dashboard',rapportiniPage:'Rapportini',calendarioPage:'Calendario',clientiPage:'Clienti',pdfPage:'Riepiloghi / PDF',finanzePage:'Finanze',settingsPage:'Impostazioni'};
+  const titles={dashboardPage:'Dashboard',rapportiniPage:'Rapportini',calendarioPage:'Calendario',pdfPage:'Riepiloghi / PDF',finanzePage:'Finanze'};
   const title=document.getElementById('pageTitle'); if(title) title.textContent=titles[pageId]||'WorkHours';
   if(pageId==='calendarioPage'){
     const dp=document.getElementById('dayPicker');
@@ -198,14 +188,10 @@ function loadTariffsSelection(){
 }
 function togglePane(which){
   const tar = which==='Tar';
-  const paneTariffe=document.getElementById('paneTariffe');
-  const paneClienti=document.getElementById('paneClienti');
-  const tabTar=document.getElementById('tabTar');
-  const tabCli=document.getElementById('tabCli');
-  if(paneTariffe) paneTariffe.classList.toggle('hidden', !tar);
-  if(paneClienti) paneClienti.classList.toggle('hidden', tar);
-  if(tabTar) tabTar.classList.toggle('active', tar);
-  if(tabCli) tabCli.classList.toggle('active', !tar);
+  $('#paneTariffe').classList.toggle('hidden', !tar);
+  $('#paneClienti').classList.toggle('hidden', tar);
+  $('#tabTar').classList.toggle('active', tar);
+  $('#tabCli').classList.toggle('active', !tar);
 }
 
 function switchView(which){
@@ -485,29 +471,6 @@ function setTime(hSel,mSel,hhmm){
   document.querySelector(hSel).value=h; document.querySelector(mSel).value=m;
 }
 
-
-async function duplicateYesterday(){
-  const dp = document.getElementById('dayPicker');
-  if(!dp || !dp.value){ alert('Seleziona prima una data'); return; }
-  const cur = new Date(dp.value + 'T00:00:00');
-  cur.setDate(cur.getDate() - 1);
-  const prev = cur.toISOString().slice(0,10);
-  const ref = db.collection('users').doc(state.user.uid).collection('days').doc(prev);
-  const snap = await ref.get();
-  if(!snap.exists){ alert('Ieri non ha dati da duplicare'); return; }
-  const v = snap.data();
-  setTime('#in1h','#in1m', v.in1||'00:00');
-  setTime('#out1h','#out1m', v.out1||'00:00');
-  setTime('#in2h','#in2m', v.in2||'00:00');
-  setTime('#out2h','#out2m', v.out2||'00:00');
-  document.getElementById('km').value = v.km||0;
-  document.getElementById('note').value = v.note||'';
-  document.getElementById('chipTrasf').classList.toggle('active', !!v.trasf);
-  document.getElementById('chipPern').classList.toggle('active', !!v.pern);
-  document.getElementById('clientSelect').selectedIndex = (v.clientIndex??-1)+1;
-  alert('Dati di ieri copiati. Controlla e salva la giornata.');
-}
-
 async function saveDay(){
   const d = document.getElementById('dayPicker').value;
   const data = getPayload();
@@ -626,16 +589,17 @@ function showDayDetail(v){
 
 async function saveTariffs(){
   const t = getTariffInputs();
+
   const sel = document.getElementById('tarClientSelect');
   const v = sel ? parseInt(sel.value,10) : -1;
 
+  // -1 => globali
   if(!sel || isNaN(v) || v === -1){
     state.tariffs = t;
     await db.collection('users').doc(state.user.uid).set({tariffs: t}, {merge:true});
     alert('Tariffe globali salvate');
     return;
-  }
-
+  // -2 => Senza cliente
   if(v === -2){
     state.tariffsNoClient = t;
     await db.collection('users').doc(state.user.uid).set({tariffsNoClient: t}, {merge:true});
@@ -643,6 +607,9 @@ async function saveTariffs(){
     return;
   }
 
+  }
+
+  // tariffe per cliente
   const c = state.clients?.[v];
   if(!c){
     alert('Cliente non valido');
@@ -650,6 +617,7 @@ async function saveTariffs(){
   }
   c.tariffs = t;
 
+  // Se ho id (doc Firestore), aggiorno quel doc. Altrimenti fallback: salva tutti i clienti.
   if(c.id){
     await db.collection('users').doc(state.user.uid).collection('clients').doc(c.id).set({tariffs: t}, {merge:true});
     alert('Tariffe cliente salvate');
