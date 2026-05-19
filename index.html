@@ -148,7 +148,28 @@
       </section>
 
       <section id="calendarioPage" class="page desktop-only">
-        <section id="calView" class="card"><div id="calGrid" class="cal-grid"></div></section>
+        <div class="calendar-layout">
+          <section id="calView" class="card calendar-card">
+            <div class="card-head calendar-head">
+              <div>
+                <h2>Calendario</h2>
+                <p class="muted">Seleziona una data per vedere il dettaglio giornata.</p>
+              </div>
+              <div class="calendar-legend">
+                <span><i class="cal-dot compiled"></i> Compilato</span>
+                <span><i class="cal-dot draft"></i> Bozza</span>
+                <span><i class="cal-dot empty"></i> Vuoto</span>
+              </div>
+            </div>
+            <div id="calGrid" class="cal-grid cal-grid-clean"></div>
+          </section>
+          <aside class="card day-side-panel">
+            <h2>Dettaglio giorno</h2>
+            <div id="calendarDayDetail" class="calendar-day-detail">
+              <p class="muted">Clicca una data nel calendario per visualizzare le informazioni.</p>
+            </div>
+          </aside>
+        </div>
       </section>
 
       <section id="clientiPage" class="page desktop-only">
@@ -230,7 +251,7 @@
 
 
   <script>
-    if('serviceWorker' in navigator){window.addEventListener('load',()=>navigator.serviceWorker.register('service-worker_v10a.js'));}
+    if('serviceWorker' in navigator){window.addEventListener('load',()=>navigator.serviceWorker.register('service-worker_v10b.js'));}
   </script>
   <script src="firebase.js"></script>
   <script src="app.js"></script>

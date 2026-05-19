@@ -260,3 +260,76 @@ body::before,.sidebar::before{
   .month-field{width:100%;min-width:0}
   .dash-kpi-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
 }
+
+
+/* STEP 10B - Calendario layout */
+.calendar-layout{
+  display:grid;
+  grid-template-columns:minmax(560px,1.4fr) minmax(300px,.7fr);
+  gap:20px;
+  align-items:start;
+}
+.calendar-card{min-height:620px}
+.calendar-head{align-items:flex-start;gap:16px;margin-bottom:16px}
+.calendar-legend{display:flex;gap:12px;flex-wrap:wrap;align-items:center;justify-content:flex-end;font-size:13px;font-weight:800;color:var(--muted)}
+.calendar-legend span{display:flex;align-items:center;gap:6px;background:#f8fafc;border:1px solid var(--softBorder);padding:8px 10px;border-radius:999px}
+.cal-dot,.cal-status-dot{width:10px;height:10px;border-radius:50%;display:inline-block}
+.cal-dot.compiled,.cal-status-dot.compiled{background:var(--primary)}
+.cal-dot.draft,.cal-status-dot.draft{background:#facc15}
+.cal-dot.empty,.cal-status-dot.empty{background:#cbd5e1}
+.cal-grid-clean{
+  display:grid;
+  grid-template-columns:repeat(7,minmax(64px,1fr));
+  gap:10px;
+  min-width:0!important;
+}
+.cal-weekday{
+  text-align:center;
+  font-weight:900;
+  color:var(--muted);
+  font-size:12px;
+  text-transform:uppercase;
+  letter-spacing:.05em;
+  padding:4px 0 8px;
+}
+.cal-empty-slot{
+  background:transparent!important;
+  border:0!important;
+  box-shadow:none!important;
+  min-height:74px;
+}
+.cal-day-clean{
+  min-height:74px;
+  border-radius:18px;
+  border:1px solid var(--softBorder);
+  background:linear-gradient(180deg,#fff 0%,#f8fafc 100%);
+  display:flex;
+  flex-direction:column;
+  justify-content:space-between;
+  align-items:flex-start;
+  padding:12px;
+  cursor:pointer;
+  transition:transform .16s ease, box-shadow .16s ease, border-color .16s ease;
+  box-shadow:0 6px 18px rgba(15,23,42,.05);
+  color:var(--ink);
+}
+.cal-day-clean:hover,.cal-day-clean.selected{
+  transform:translateY(-2px);
+  border-color:#94a3b8;
+  box-shadow:0 14px 30px rgba(15,23,42,.12);
+}
+.cal-day-clean.selected{outline:3px solid rgba(30,42,56,.10)}
+.cal-day-num{font-weight:950;font-size:18px;letter-spacing:-.03em}
+.day-side-panel{position:sticky;top:24px;min-height:360px}
+.calendar-day-detail{display:grid;gap:16px;margin-top:12px}
+.detail-date{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;border-bottom:1px solid var(--softBorder);padding-bottom:14px}
+.detail-date strong{font-size:22px;color:var(--primary)}
+.detail-date span{color:var(--muted);font-weight:800;text-align:right}
+.detail-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.detail-grid>div{background:#f8fafc;border:1px solid var(--softBorder);border-radius:16px;padding:12px}
+.detail-grid span{display:block;color:var(--muted);font-size:12px;font-weight:900;text-transform:uppercase;letter-spacing:.04em;margin-bottom:4px}
+.detail-grid strong{font-size:20px;color:var(--primary)}
+.detail-lines{display:grid;gap:8px;color:var(--ink2)}
+.detail-lines p{margin:0;line-height:1.45}
+#calendarioPage #calView{overflow:visible!important}
+@media(max-width:1100px){.calendar-layout{grid-template-columns:1fr}.day-side-panel{position:relative;top:auto}.cal-grid-clean{grid-template-columns:repeat(7,minmax(58px,1fr))}}

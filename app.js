@@ -619,16 +619,28 @@ async function loadMonth(yyyyMM){
   if(grid){
     const firstDay = new Date(y, m-1, 1);
     const offset = (firstDay.getDay()+6)%7;
-    for(let i=0;i<offset;i++){ const empty=document.createElement('div'); empty.className='day'; grid.appendChild(empty); }
+    const weekDays = ['Lun','Mar','Mer','Gio','Ven','Sab','Dom'];
+    weekDays.forEach(w=>{
+      const h=document.createElement('div');
+      h.className='cal-weekday';
+      h.textContent=w;
+      grid.appendChild(h);
+    });
+    for(let i=0;i<offset;i++){
+      const empty=document.createElement('div');
+      empty.className='day cal-empty-slot';
+      grid.appendChild(empty);
+    }
     arr.forEach(v=>{
       const dNum = Number(v.id.slice(-2));
-      const cell=document.createElement('div'); cell.className='day'; cell.dataset.date=v.id;
-      cell.innerHTML = `<strong>${dNum}</strong><div class="bar"></div>
-        <div><span class="badge ok">${(v.ordH||0).toFixed(1)}h</span> <span class="badge warn">${(v.strH||0).toFixed(1)}h</span></div>`;
-      const bar = cell.querySelector('.bar');
-      const s1=document.createElement('span'); s1.className='seg ord'; s1.style.width=Math.min(100,Math.round((v.ordH||0)/8*100))+'%';
-      const s2=document.createElement('span'); s2.className='seg str'; s2.style.width=Math.min(100,Math.round((v.strH||0)/8*100))+'%';
-      bar.appendChild(s1); bar.appendChild(s2);
+      const isCompiled = (v.totalH||0)>0 || (v.ordH||0)>0 || (v.strH||0)>0 || (v.km||0)>0;
+      const isDraft = !isCompiled && !!(v.note || v.trasf || v.pern);
+      const status = isCompiled ? 'compiled' : (isDraft ? 'draft' : 'empty');
+      const cell=document.createElement('button');
+      cell.type='button';
+      cell.className='day cal-day-clean ' + status;
+      cell.dataset.date=v.id;
+      cell.innerHTML = `<span class="cal-day-num">${dNum}</span><span class="cal-status-dot ${status}"></span>`;
       cell.onclick = ()=> showDayDetail(v);
       grid.appendChild(cell);
     });
@@ -637,12 +649,35 @@ async function loadMonth(yyyyMM){
 
 function showDayDetail(v){
   const cli = (state.clients||[])[v.clientIndex]?.ragione || '—';
-  document.getElementById('dayDetail').innerHTML = `<p><strong>${fmtIT(v.id)}</strong></p>
-    <p>Cliente: ${cli}</p>
-    <p>In1: ${v.in1||'-'}  Out1: ${v.out1||'-'}<br>In2: ${v.in2||'-'}  Out2: ${v.out2||'-'}</p>
-    <p>Ord: ${(v.ordH||0).toFixed(2)}h  Str: ${(v.strH||0).toFixed(2)}h  KM: ${v.km||0}</p>
-    <p>Trasferta: ${v.trasf?'Sì':'No'}  Pernotto: ${v.pern?'Sì':'No'}</p>
-    <p>Note: ${v.note||''}</p>`;
+  const detailHtml = `<div class="detail-date"><strong>${fmtIT(v.id)}</strong><span>${cli}</span></div>
+    <div class="detail-grid">
+      <div><span>Ordinarie</span><strong>${(v.ordH||0).toFixed(2)}h</strong></div>
+      <div><span>Straordinarie</span><strong>${(v.strH||0).toFixed(2)}h</strong></div>
+      <div><span>KM</span><strong>${v.km||0}</strong></div>
+      <div><span>Totale ore</span><strong>${(v.totalH||0).toFixed(2)}h</strong></div>
+    </div>
+    <div class="detail-lines">
+      <p><b>Orari:</b> ${v.in1||'-'} → ${v.out1||'-'} · ${v.in2||'-'} → ${v.out2||'-'}</p>
+      <p><b>Extra:</b> Trasferta ${v.trasf?'Sì':'No'} · Pernotto ${v.pern?'Sì':'No'}</p>
+      <p><b>Note:</b> ${v.note||'—'}</p>
+    </div>
+    <button type="button" class="btn primary" id="btnEditCalendarDay">Modifica</button>`;
+  const panel=document.getElementById('calendarDayDetail');
+  if(panel && document.getElementById('calendarioPage')?.classList.contains('page-active')){
+    panel.innerHTML = detailHtml;
+    const btn=document.getElementById('btnEditCalendarDay');
+    if(btn){
+      btn.onclick = async ()=>{
+        const dp=document.getElementById('dayPicker');
+        if(dp) dp.value=v.id;
+        await loadDay(v.id);
+        showMainPage('rapportiniPage');
+      };
+    }
+    document.querySelectorAll('.cal-day-clean').forEach(el=>el.classList.toggle('selected', el.dataset.date===v.id));
+    return;
+  }
+  document.getElementById('dayDetail').innerHTML = detailHtml;
   document.getElementById('dayDlg').showModal();
 }
 
