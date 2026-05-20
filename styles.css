@@ -756,3 +756,77 @@ body::before,.sidebar::before{
   #clientiPage .client-directory-rows{max-height:300px}
   #clientiPage .tariff-mode-grid{grid-template-columns:1fr}
 }
+
+/* STEP 10H1 - coerenza colori e clienti full width */
+:root{
+  --actionBlue: var(--primary);
+  --actionBlue2: var(--primary2);
+}
+
+/* Blu coerente con sidebar, non blu acceso */
+#dashboardPage .stat-card-action,
+#pdfPage .pdf-box .btn{
+  background:linear-gradient(135deg,var(--actionBlue),var(--actionBlue2))!important;
+  border-color:rgba(30,42,56,.35)!important;
+  color:#fff!important;
+  box-shadow:0 18px 38px rgba(30,42,56,.22)!important;
+}
+#dashboardPage .stat-card-action:after,
+#pdfPage .pdf-box .btn:after{
+  background:linear-gradient(90deg,rgba(255,255,255,.38),rgba(148,163,184,.55))!important;
+}
+
+/* Clienti: rubrica larga come scheda cliente e tariffe full width */
+#clientiPage .clients-layout{
+  display:grid!important;
+  grid-template-columns:1fr!important;
+  gap:20px!important;
+  align-items:stretch!important;
+}
+#clientiPage .client-directory-card,
+#clientiPage .client-profile-card,
+#clientiPage .client-tariffs-card{
+  width:100%!important;
+  max-width:none!important;
+  grid-column:1 / -1!important;
+}
+#clientiPage .client-main-panel{
+  display:grid!important;
+  grid-template-columns:1fr!important;
+  gap:20px!important;
+  width:100%!important;
+}
+#clientiPage .client-directory-card{
+  min-height:0!important;
+  height:auto!important;
+}
+#clientiPage .client-profile-card{
+  min-height:0!important;
+}
+#clientiPage .client-directory-rows{
+  max-height:240px!important;
+  overflow-y:auto!important;
+  padding-right:8px!important;
+}
+@media(min-width:1000px){
+  #clientiPage .client-directory-rows{
+    display:grid!important;
+    grid-template-columns:repeat(3,minmax(0,1fr))!important;
+    gap:12px!important;
+  }
+}
+@media(max-width:999px){
+  #clientiPage .client-directory-rows{
+    display:grid!important;
+    grid-template-columns:1fr!important;
+  }
+}
+
+/* Riepiloghi/PDF: totale stimato verde più leggibile */
+#pdfPage .pdf-preview-kpis .accent{
+  background:linear-gradient(135deg,var(--success),#0f7a37)!important;
+  color:#fff!important;
+}
+#pdfPage .pdf-preview-kpis .accent *{
+  color:#fff!important;
+}
