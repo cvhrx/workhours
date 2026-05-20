@@ -974,3 +974,45 @@ body::before,.sidebar::before{
 @media(max-width:720px){
   #clientiPage .tariff-v2-fields{grid-template-columns:1fr!important;}
 }
+
+/* STEP11B - Rapportini: tipo giornata e ore viaggio */
+.travel-panel{
+  margin:14px 0;
+  padding:16px;
+  border:1px solid var(--line);
+  border-radius:22px;
+  background:linear-gradient(180deg,#ffffff,#f8fafc);
+  box-shadow:0 10px 24px rgba(15,23,42,.06);
+}
+.travel-panel .chips{
+  flex-wrap:wrap;
+}
+.work-mode-chip.active,
+.travel-vehicle-chip.active{
+  background:var(--primary);
+  color:#fff;
+  -webkit-text-fill-color:#fff;
+}
+.travel-options{
+  margin-top:14px;
+  padding-top:14px;
+  border-top:1px dashed #d8dee8;
+}
+.field-help{
+  display:block;
+  margin-top:6px;
+  color:var(--muted);
+  font-weight:650;
+  line-height:1.35;
+}
+@media (max-width:720px){
+  .travel-panel{
+    padding:14px;
+    border-radius:18px;
+  }
+  .work-mode-group .chip,
+  .travel-vehicle-group .chip{
+    width:100%;
+    text-align:center;
+  }
+}

@@ -55,6 +55,7 @@ document.addEventListener('DOMContentLoaded', ()=>{
 
   $('#chipTrasf').onclick = ()=> $('#chipTrasf').classList.toggle('active');
   $('#chipPern').onclick  = ()=> $('#chipPern').classList.toggle('active');
+  setupTravelControls();
   const settingsBtn = document.getElementById('btnSettings');
   if(settingsBtn) settingsBtn.onclick = ()=> showMainPage('settingsPage');
   const closeSettings = document.getElementById('closeSettings');
@@ -123,6 +124,64 @@ function syncMobileDate(){
   if(!m.value) m.value=d.value;
   m.onchange=async ()=>{ d.value=m.value; await loadDay(d.value); await loadMonth(d.value.slice(0,7)); };
   d.addEventListener('change',()=>{ m.value=d.value; });
+}
+
+
+function setupTravelControls(){
+  document.querySelectorAll('.work-mode-chip').forEach(btn=>{
+    btn.addEventListener('click',()=> setWorkMode(btn.dataset.workMode || 'locale'));
+  });
+  document.querySelectorAll('.travel-vehicle-chip').forEach(btn=>{
+    btn.addEventListener('click',()=> setTravelVehicle(btn.dataset.travelVehicle || 'auto'));
+  });
+  setWorkMode(getWorkMode());
+  setTravelVehicle(getTravelVehicle());
+}
+
+function getWorkMode(){
+  return document.querySelector('.work-mode-chip.active')?.dataset.workMode || 'locale';
+}
+
+function getTravelVehicle(){
+  return document.querySelector('.travel-vehicle-chip.active')?.dataset.travelVehicle || 'auto';
+}
+
+function setWorkMode(mode){
+  mode = ['locale','italia','estero'].includes(mode) ? mode : 'locale';
+  document.querySelectorAll('.work-mode-chip').forEach(btn=>{
+    btn.classList.toggle('active', btn.dataset.workMode === mode);
+  });
+  const travelOptions = document.getElementById('travelOptions');
+  if(travelOptions){
+    travelOptions.classList.toggle('hidden', mode === 'locale');
+  }
+  // Locale: niente mezzo e niente ore viaggio
+  if(mode === 'locale'){
+    const travelH = document.getElementById('travelH');
+    if(travelH) travelH.value = '0';
+  }
+}
+
+function setTravelVehicle(vehicle){
+  vehicle = ['auto','aereo','mezzo_fornito'].includes(vehicle) ? vehicle : 'auto';
+  document.querySelectorAll('.travel-vehicle-chip').forEach(btn=>{
+    btn.classList.toggle('active', btn.dataset.travelVehicle === vehicle);
+  });
+}
+
+function getTravelHoursForPayload(){
+  const mode = getWorkMode();
+  if(mode === 'locale') return 0;
+  const n = parseFloat((document.getElementById('travelH')?.value || '0').toString().replace(',', '.'));
+  return Number.isFinite(n) ? n : 0;
+}
+
+function applyTravelFields(v){
+  const mode = v?.workMode || (v?.trasf ? 'italia' : 'locale');
+  setWorkMode(mode);
+  setTravelVehicle(v?.travelVehicle || 'auto');
+  const travelH = document.getElementById('travelH');
+  if(travelH) travelH.value = (mode === 'locale') ? '0' : (v?.travelH ?? 0);
 }
 
 function updateDashboard(arr){
@@ -373,7 +432,10 @@ function getPayload(){
     strH: Number(str.toFixed(2)),
     totalH: Number(total.toFixed(2)),
     km: parseFloat(document.getElementById('km').value||'0')||0,
-    trasf: document.getElementById('chipTrasf').classList.contains('active'),
+    workMode: getWorkMode(),
+    travelVehicle: getWorkMode() === 'locale' ? '' : getTravelVehicle(),
+    travelH: Number(getTravelHoursForPayload().toFixed(2)),
+    trasf: document.getElementById('chipTrasf').classList.contains('active') || getWorkMode() !== 'locale',
     pern:  document.getElementById('chipPern').classList.contains('active'),
     note: document.getElementById('note').value||'',
     clientIndex
@@ -684,6 +746,7 @@ async function duplicateYesterday(){
   document.getElementById('note').value = v.note||'';
   document.getElementById('chipTrasf').classList.toggle('active', !!v.trasf);
   document.getElementById('chipPern').classList.toggle('active', !!v.pern);
+  applyTravelFields(v);
   document.getElementById('clientSelect').selectedIndex = (v.clientIndex??-1)+1;
   alert('Dati di ieri copiati. Controlla e salva la giornata.');
 }
@@ -714,6 +777,7 @@ async function loadDay(d){
     document.getElementById('note').value = v.note||'';
     document.getElementById('chipTrasf').classList.toggle('active', !!v.trasf);
     document.getElementById('chipPern').classList.toggle('active', !!v.pern);
+    applyTravelFields(v);
     document.getElementById('clientSelect').selectedIndex = (v.clientIndex??-1)+1;
   }else{
     // reset form when day is empty
@@ -727,6 +791,7 @@ async function loadDay(d){
     document.getElementById('chipPern').classList.remove('active');
     const fest = document.getElementById('chipFestivo');
     if(fest) fest.classList.remove('active');
+    applyTravelFields({workMode:'locale', travelVehicle:'auto', travelH:0});
     document.getElementById('clientSelect').selectedIndex = 0;
   }
 }

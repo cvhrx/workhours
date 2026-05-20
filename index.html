@@ -133,6 +133,34 @@
             <div class="field"><label>KM totali</label><input id="km" inputmode="numeric" value="0"></div>
             <div class="field"><label>Cliente</label><select id="clientSelect"><option>—</option></select></div>
           </div>
+
+          <div class="travel-panel">
+            <div class="field full">
+              <label>Tipo giornata</label>
+              <div class="chips work-mode-group" id="workModeGroup">
+                <button type="button" class="chip work-mode-chip active" data-work-mode="locale">Locale</button>
+                <button type="button" class="chip work-mode-chip" data-work-mode="italia">Trasferta Italia</button>
+                <button type="button" class="chip work-mode-chip" data-work-mode="estero">Trasferta Estero</button>
+              </div>
+            </div>
+
+            <div id="travelOptions" class="travel-options hidden">
+              <div class="field full">
+                <label>Mezzo utilizzato</label>
+                <div class="chips travel-vehicle-group" id="travelVehicleGroup">
+                  <button type="button" class="chip travel-vehicle-chip active" data-travel-vehicle="auto">Auto personale</button>
+                  <button type="button" class="chip travel-vehicle-chip" data-travel-vehicle="aereo">Aereo</button>
+                  <button type="button" class="chip travel-vehicle-chip" data-travel-vehicle="mezzo_fornito">Mezzo fornito</button>
+                </div>
+              </div>
+              <div class="field">
+                <label>Ore viaggio</label>
+                <input id="travelH" inputmode="decimal" value="0" placeholder="0">
+                <small class="field-help">Il calcolo verrà applicato nello step successivo in base al mezzo e alle tariffe cliente.</small>
+              </div>
+            </div>
+          </div>
+
           <div class="row chips">
             <button type="button" id="chipTrasf" class="chip">Trasferta</button>
             <button type="button" id="chipPern" class="chip">Pernotto</button>
@@ -435,7 +463,7 @@
 
 
   <script>
-    if('serviceWorker' in navigator){window.addEventListener('load',()=>navigator.serviceWorker.register('service-worker_v11a.js'));}
+    if('serviceWorker' in navigator){window.addEventListener('load',()=>navigator.serviceWorker.register('service-worker_v11b.js'));}
   </script>
   <script src="firebase.js"></script>
   <script src="app.js"></script>
