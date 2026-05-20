@@ -658,3 +658,101 @@ body::before,.sidebar::before{
   .bar-row{grid-template-columns:1fr;gap:8px;}
   .bar-row b{text-align:left;}
 }
+
+/* STEP 10H - coerenza grafica colori/layout */
+:root{
+  --success:#16a34a;
+  --success2:#22c55e;
+}
+
+/* Dashboard: blu = azione, verde = valore economico */
+#dashboardPage .stat-card-accent,
+#pdfPage .pdf-preview-kpis .accent{
+  background:linear-gradient(135deg,var(--success),#0f7a37)!important;
+  border-color:rgba(22,163,74,.28)!important;
+  box-shadow:0 18px 38px rgba(22,163,74,.18)!important;
+}
+#dashboardPage .stat-card-accent:after,
+#pdfPage .pdf-preview-kpis .accent:after{
+  background:linear-gradient(90deg,rgba(255,255,255,.55),rgba(187,247,208,.85))!important;
+  opacity:.55!important;
+}
+#dashboardPage .stat-card-action{
+  background:linear-gradient(135deg,#2563eb,#1d4ed8)!important;
+  border-color:rgba(37,99,235,.22)!important;
+  color:#fff!important;
+  box-shadow:0 18px 38px rgba(37,99,235,.20)!important;
+}
+#dashboardPage .stat-card-action span,
+#dashboardPage .stat-card-action strong{color:#fff!important}
+#dashboardPage .stat-card-action:after{
+  background:linear-gradient(90deg,rgba(255,255,255,.45),rgba(191,219,254,.75))!important;
+  opacity:.65!important;
+}
+
+/* Clienti: rubrica e scheda allineate, condizioni/tariffe full width */
+#clientiPage .clients-layout{
+  grid-template-columns:minmax(340px,.42fr) minmax(0,1fr);
+  align-items:start;
+}
+#clientiPage .client-directory-card,
+#clientiPage .client-profile-card{
+  min-height:520px;
+}
+#clientiPage .client-directory-card{
+  position:relative!important;
+  top:auto!important;
+  display:flex;
+  flex-direction:column;
+}
+#clientiPage .client-directory-rows{
+  max-height:360px;
+  overflow-y:auto;
+  padding-right:6px;
+  scrollbar-width:thin;
+}
+#clientiPage .client-directory-rows::-webkit-scrollbar{width:8px}
+#clientiPage .client-directory-rows::-webkit-scrollbar-thumb{background:#cbd5e1;border-radius:999px}
+#clientiPage .client-main-panel{
+  display:contents!important;
+}
+#clientiPage .client-profile-card{
+  grid-column:2;
+}
+#clientiPage .client-tariffs-card{
+  grid-column:1 / -1;
+  width:100%;
+  margin-top:4px;
+}
+#clientiPage .client-tariffs-card .card-head{
+  display:flex;
+  align-items:flex-start;
+  justify-content:space-between;
+  gap:20px;
+}
+#clientiPage .tariff-mode-grid{
+  grid-template-columns:repeat(3,minmax(0,1fr));
+}
+
+/* Riepiloghi/PDF: entrambi i pulsanti blu, totale stimato verde */
+#pdfPage .pdf-box .btn{
+  background:linear-gradient(135deg,#2563eb,#1d4ed8)!important;
+  color:#fff!important;
+  border-color:rgba(37,99,235,.30)!important;
+  box-shadow:0 14px 28px rgba(37,99,235,.18)!important;
+}
+#pdfPage .pdf-preview-kpis .accent span,
+#pdfPage .pdf-preview-kpis .accent strong{
+  color:#fff!important;
+}
+
+@media(max-width:1200px){
+  #clientiPage .clients-layout{grid-template-columns:1fr!important}
+  #clientiPage .client-profile-card,
+  #clientiPage .client-tariffs-card{grid-column:auto!important}
+  #clientiPage .client-main-panel{display:grid!important;gap:20px}
+  #clientiPage .client-directory-card,
+  #clientiPage .client-profile-card{min-height:auto}
+  #clientiPage .client-directory-rows{max-height:300px}
+  #clientiPage .tariff-mode-grid{grid-template-columns:1fr}
+}
