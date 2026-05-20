@@ -1016,3 +1016,8 @@ body::before,.sidebar::before{
     text-align:center;
   }
 }
+
+.hidden{display:none!important}
+
+/* STEP11C: legacy transfer chip hidden; only Trasferta non lavorata remains */
+#chipTrasf{display:none!important;}

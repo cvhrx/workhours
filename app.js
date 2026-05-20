@@ -830,7 +830,7 @@ async function loadMonth(yyyyMM){
         const exp = document.createElement('div');
         exp.className='card';
         exp.innerHTML = `<p>In1: ${v.in1||'-'} Out1: ${v.out1||'-'} · In2: ${v.in2||'-'} Out2: ${v.out2||'-'} · KM: ${v.km||0}</p>
-                         <p>Trasferta: ${v.trasf?'Sì':'No'} · Pernotto: ${v.pern?'Sì':'No'}</p>
+                         <p>Trasferta: ${v.trasf?'Sì':'No'} · Trasferta non lavorata: ${v.pern?'Sì':'No'}</p>
                          <p>Note: ${v.note||''}</p>`;
         if(row.nextSibling && row.nextSibling.className==='card') row.parentNode.removeChild(row.nextSibling);
         else row.parentNode.insertBefore(exp, row.nextSibling);
@@ -881,7 +881,7 @@ function showDayDetail(v){
     </div>
     <div class="detail-lines">
       <p><b>Orari:</b> ${v.in1||'-'} → ${v.out1||'-'} · ${v.in2||'-'} → ${v.out2||'-'}</p>
-      <p><b>Extra:</b> Trasferta ${v.trasf?'Sì':'No'} · Pernotto ${v.pern?'Sì':'No'}</p>
+      <p><b>Extra:</b> Trasferta ${v.trasf?'Sì':'No'} · Trasferta non lavorata ${v.pern?'Sì':'No'}</p>
       <p><b>Note:</b> ${v.note||'—'}</p>
     </div>
     <button type="button" class="btn primary" id="btnEditCalendarDay">Modifica</button>`;
@@ -1124,8 +1124,8 @@ doc.addImage(
   if(typeof doc.autoTable === 'function'){
     
   const headDays = (clientIndex < 0)
-    ? [['Giorno','Cliente','In1','Out1','In2','Out2','Ord','Str','Trsf.','Pern.','KM','Note']]
-    : [['Giorno','In1','Out1','In2','Out2','Ord','Str','Trsf.','Pern.','KM','Note']];
+    ? [['Giorno','Cliente','In1','Out1','In2','Out2','Ord','Str','Trsf.','Trsf. non lav.','KM','Note']]
+    : [['Giorno','In1','Out1','In2','Out2','Ord','Str','Trsf.','Trsf. non lav.','KM','Note']];
 
   const colDays = (clientIndex < 0)
     ? {
@@ -1242,7 +1242,7 @@ doc.autoTable({
       ['Ore straordinarie', totStr.toFixed(2), (t.str||0).toFixed(2), (totStr*(t.str||0)).toFixed(2)],
       ['KM', String(Math.round(totKm)), (t.km||0).toFixed(2), (totKm*(t.km||0)).toFixed(2)],
       ['Trasferte', String(nTrasf), (t.trasf||0).toFixed(2), (nTrasf*(t.trasf||0)).toFixed(2)],
-      ['Pernotti', String(nPern), (t.pern||0).toFixed(2), (nPern*(t.pern||0)).toFixed(2)]
+      ['Trasferte non lavorate', String(nPern), (t.pern||0).toFixed(2), (nPern*(t.pern||0)).toFixed(2)]
     ];
     const totBase = items.reduce((s, r)=> s + parseFloat(r[3]), 0);
     const sogliaBollo = 77.47;

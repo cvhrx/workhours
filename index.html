@@ -162,8 +162,8 @@
           </div>
 
           <div class="row chips">
-            <button type="button" id="chipTrasf" class="chip">Trasferta</button>
-            <button type="button" id="chipPern" class="chip">Pernotto</button>
+            <button type="button" id="chipTrasf" class="chip hidden">Trasferta</button>
+            <button type="button" id="chipPern" class="chip">Trasferta non lavorata</button>
           </div>
           <div class="field"><label>Note</label><textarea id="note" rows="3" placeholder="Cliente / sede / attività"></textarea></div>
           <div class="row gap action-row">
@@ -272,8 +272,7 @@
                   <div class="tariff-mini-grid tariff-v2-fields">
                     <div class="field"><label>€ / h ordinarie</label><input id="tarItOrd" inputmode="decimal" value="33"></div>
                     <div class="field"><label>€ / km</label><input id="tarItKm" inputmode="decimal" value="0.50"></div>
-                    <div class="field"><label>Trasferta giornaliera</label><input id="tarTrasf" inputmode="decimal" value="80"></div>
-                    <div class="field"><label>Pernotto</label><input id="tarPern" inputmode="decimal" value="95"></div>
+                    <div class="field"><label>Trasferta non lavorata</label><input id="tarPern" inputmode="decimal" value="80"></div>
                     <div class="field"><label>Ore viaggio</label><select id="tarItTravelMode"><option value="none">Non pagate</option><option value="percent">Percentuale ora lavoro</option><option value="fixed">Valore fisso €/h</option></select></div>
                     <div class="field"><label>Percentuale viaggio %</label><input id="tarItTravelPct" inputmode="decimal" value="75"></div>
                     <div class="field"><label>Valore viaggio €/h</label><input id="tarItTravelFixed" inputmode="decimal" value="0"></div>
@@ -288,15 +287,14 @@
                   <div class="tariff-mini-grid tariff-v2-fields">
                     <div class="field"><label>€ / h ordinarie</label><input id="tarAbroadOrd" inputmode="decimal" value="38"></div>
                     <div class="field"><label>€ / km</label><input id="tarAbroadKm" inputmode="decimal" value="0.50"></div>
-                    <div class="field"><label>Trasferta giornaliera</label><input id="tarAbroadTrasf" inputmode="decimal" value="120"></div>
-                    <div class="field"><label>Pernotto</label><input id="tarAbroadPern" inputmode="decimal" value="120"></div>
+                    <div class="field"><label>Trasferta non lavorata</label><input id="tarAbroadPern" inputmode="decimal" value="120"></div>
                     <div class="field"><label>Ore viaggio</label><select id="tarAbroadTravelMode"><option value="none">Non pagate</option><option value="percent">Percentuale ora lavoro</option><option value="fixed">Valore fisso €/h</option></select></div>
                     <div class="field"><label>Percentuale viaggio %</label><input id="tarAbroadTravelPct" inputmode="decimal" value="75"></div>
                     <div class="field"><label>Valore viaggio €/h</label><input id="tarAbroadTravelFixed" inputmode="decimal" value="0"></div>
                     <div class="field"><label>Straordinario %</label><input id="tarAbroadOverPct" inputmode="decimal" value="25"></div>
                     <div class="field"><label>Festivo / prefestivo %</label><input id="tarAbroadHolidayPct" inputmode="decimal" value="25"></div>
                   </div>
-                  <div class="tariff-hint">Estero separato da Italia: valori, pernotto, viaggio e maggiorazioni possono essere diversi per cliente.</div>
+                  <div class="tariff-hint">Estero separato da Italia: valori, trasferta non lavorata, viaggio e maggiorazioni possono essere diversi per cliente.</div>
                 </div>
               </div>
 
@@ -463,7 +461,7 @@
 
 
   <script>
-    if('serviceWorker' in navigator){window.addEventListener('load',()=>navigator.serviceWorker.register('service-worker_v11b.js'));}
+    if('serviceWorker' in navigator){window.addEventListener('load',()=>navigator.serviceWorker.register('service-worker_v11c.js'));}
   </script>
   <script src="firebase.js"></script>
   <script src="app.js"></script>
