@@ -339,63 +339,60 @@
           <div class="field month-inline"><label>Mese</label><input type="month" id="financeMonth"></div>
         </div>
 
-        <div class="stat-grid finance-stats">
+        <div class="stat-grid finance-stats finance-stats-clean">
           <div class="stat-card finance-income"><span>Entrate</span><strong>€0,00</strong><small>Fatture / incassi del mese</small></div>
           <div class="stat-card finance-expense"><span>Uscite</span><strong>€0,00</strong><small>Spese inserite</small></div>
           <div class="stat-card finance-balance"><span>Saldo mese</span><strong>€0,00</strong><small>Entrate meno uscite</small></div>
-          <button class="stat-card finance-new" type="button">
-            <span>Nuovo movimento</span><strong>+</strong><small>Entrata o uscita</small>
-          </button>
         </div>
 
-        <section class="finance-grid">
-          <div class="card finance-card">
+        <section class="finance-grid finance-grid-v2">
+          <div class="card finance-card finance-movement-card">
             <div class="card-head">
               <div>
-                <h2>Movimenti</h2>
-                <p class="muted">Layout pronto. Le logiche reali verranno collegate nello step successivo.</p>
-              </div>
-              <div class="finance-actions">
-                <button class="btn primary" type="button">+ Entrata</button>
-                <button class="btn ghost" type="button">+ Uscita</button>
+                <h2>Nuovo movimento</h2>
+                <p class="muted">Inserisci una singola entrata o uscita. Le logiche reali verranno collegate nello step successivo.</p>
               </div>
             </div>
 
-            <div class="finance-form-preview">
-              <div class="field"><label>Tipo</label><select><option>Entrata</option><option>Uscita</option></select></div>
-              <div class="field"><label>Categoria</label><select><option>Carburante</option><option>Spesa</option><option>Affitto</option><option>Ristoranti</option><option>Svago</option><option>Attrezzatura</option><option>Software</option><option>Altro</option></select></div>
+            <div class="finance-form-preview finance-form-v2">
+              <div class="field"><label>Tipo</label><select><option>Uscita</option><option>Entrata</option></select></div>
+              <div class="field"><label>Categoria</label><select><option>Carburante</option><option>Spesa</option><option>Affitto</option><option>Ristoranti</option><option>Svago</option><option>Commercialista</option><option>Attrezzatura</option><option>Software</option><option>Telefonia</option><option>Assicurazioni</option><option>Vestiario</option><option>Altro</option></select></div>
               <div class="field"><label>Importo</label><input placeholder="0,00 €"></div>
               <div class="field"><label>Data</label><input type="date"></div>
-            </div>
-
-            <div class="finance-table">
-              <div class="finance-row finance-row-head"><span>Data</span><span>Categoria</span><span>Descrizione</span><span>Importo</span></div>
-              <div class="finance-row"><span>--/--</span><span>Carburante</span><span>Movimento esempio</span><strong>- €0,00</strong></div>
-              <div class="finance-row"><span>--/--</span><span>Entrata</span><span>Fattura esempio</span><strong>+ €0,00</strong></div>
+              <div class="field finance-note-field"><label>Note</label><textarea placeholder="Es. pieno furgone, fattura cliente, acquisto attrezzatura..."></textarea></div>
+              <button class="btn primary finance-save-preview" type="button">Salva movimento</button>
             </div>
           </div>
 
-          <aside class="card finance-side">
-            <h2>Uscite per categoria</h2>
-            <div class="finance-donut"><span>€0</span></div>
-            <div class="finance-legend">
-              <div><i style="--dot:#1E2A38"></i>Carburante <b>0%</b></div>
-              <div><i style="--dot:#f97316"></i>Affitto <b>0%</b></div>
-              <div><i style="--dot:#22c55e"></i>Ristoranti <b>0%</b></div>
-              <div><i style="--dot:#94a3b8"></i>Altro <b>0%</b></div>
+          <aside class="card finance-list-card">
+            <div class="card-head compact">
+              <div>
+                <h2>Lista movimenti</h2>
+                <p class="muted">Anteprima grafica dei movimenti del mese.</p>
+              </div>
+            </div>
+            <div class="movement-list-preview">
+              <div class="movement-item expense"><div><strong>Carburante</strong><span>20/05/2026 · Pieno furgone</span></div><b>- €40,00</b></div>
+              <div class="movement-item expense"><div><strong>Ristorante</strong><span>18/05/2026 · Cena</span></div><b>- €25,00</b></div>
+              <div class="movement-item income"><div><strong>Fattura cliente</strong><span>15/05/2026 · Incasso</span></div><b>+ €450,00</b></div>
             </div>
           </aside>
         </section>
 
-        <section class="card">
-          <div class="card-head">
+        <section class="card finance-bars-card">
+          <div class="card-head compact">
             <div>
-              <h2>Categorie</h2>
-              <p class="muted">Categorie unificate. Niente divisione fiscale lavoro/personale.</p>
+              <h2>Uscite per categoria</h2>
+              <p class="muted">Grafico a barre orizzontali. Verrà alimentato dai movimenti reali.</p>
             </div>
           </div>
-          <div class="category-pills finance-cats">
-            <span>Carburante</span><span>Spesa</span><span>Affitto</span><span>Ristoranti</span><span>Svago</span><span>Commercialista</span><span>Attrezzatura</span><span>Software</span><span>Telefonia</span><span>Assicurazioni</span><span>Vestiario</span><span>Altro</span>
+          <div class="finance-bars">
+            <div class="bar-row"><span>Carburante</span><div class="bar-track"><i style="width:72%"></i></div><b>€320</b></div>
+            <div class="bar-row"><span>Affitto</span><div class="bar-track"><i style="width:58%"></i></div><b>€260</b></div>
+            <div class="bar-row"><span>Ristoranti</span><div class="bar-track"><i style="width:36%"></i></div><b>€160</b></div>
+            <div class="bar-row"><span>Attrezzatura</span><div class="bar-track"><i style="width:24%"></i></div><b>€110</b></div>
+            <div class="bar-row"><span>Software</span><div class="bar-track"><i style="width:12%"></i></div><b>€45</b></div>
+            <div class="bar-row"><span>Altro</span><div class="bar-track"><i style="width:8%"></i></div><b>€30</b></div>
           </div>
         </section>
       </section>
@@ -422,7 +419,7 @@
 
 
   <script>
-    if('serviceWorker' in navigator){window.addEventListener('load',()=>navigator.serviceWorker.register('service-worker_v10g.js'));}
+    if('serviceWorker' in navigator){window.addEventListener('load',()=>navigator.serviceWorker.register('service-worker_v10g1.js'));}
   </script>
   <script src="firebase.js"></script>
   <script src="app.js"></script>
