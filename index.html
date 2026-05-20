@@ -330,20 +330,74 @@
       </section>
 
       <section id="finanzePage" class="page desktop-only">
-        <div class="stat-grid small">
-          <div class="stat-card"><span>Entrate</span><strong>€0</strong></div>
-          <div class="stat-card"><span>Uscite</span><strong>€0</strong></div>
-          <div class="stat-card"><span>Saldo</span><strong>€0</strong></div>
-        </div>
-        <section class="card finance-layout">
+        <div class="page-intro finance-intro">
           <div>
-            <h2>Finanze</h2>
-            <p class="muted">Modulo separato da rapportini e ore. Qui gestirai entrate, uscite e categorie.</p>
-            <div class="finance-actions"><button class="btn primary" type="button">+ Entrata</button><button class="btn ghost" type="button">+ Uscita</button></div>
+            <p class="eyebrow">Finanze</p>
+            <h2>Controllo entrate e uscite</h2>
+            <p class="muted">Area separata dai rapportini. Serve per capire quanto entra, quanto esce e dove stanno andando i soldi.</p>
           </div>
-          <div class="finance-donut"><span>€0</span></div>
+          <div class="field month-inline"><label>Mese</label><input type="month" id="financeMonth"></div>
+        </div>
+
+        <div class="stat-grid finance-stats">
+          <div class="stat-card finance-income"><span>Entrate</span><strong>€0,00</strong><small>Fatture / incassi del mese</small></div>
+          <div class="stat-card finance-expense"><span>Uscite</span><strong>€0,00</strong><small>Spese inserite</small></div>
+          <div class="stat-card finance-balance"><span>Saldo mese</span><strong>€0,00</strong><small>Entrate meno uscite</small></div>
+          <button class="stat-card finance-new" type="button">
+            <span>Nuovo movimento</span><strong>+</strong><small>Entrata o uscita</small>
+          </button>
+        </div>
+
+        <section class="finance-grid">
+          <div class="card finance-card">
+            <div class="card-head">
+              <div>
+                <h2>Movimenti</h2>
+                <p class="muted">Layout pronto. Le logiche reali verranno collegate nello step successivo.</p>
+              </div>
+              <div class="finance-actions">
+                <button class="btn primary" type="button">+ Entrata</button>
+                <button class="btn ghost" type="button">+ Uscita</button>
+              </div>
+            </div>
+
+            <div class="finance-form-preview">
+              <div class="field"><label>Tipo</label><select><option>Entrata</option><option>Uscita</option></select></div>
+              <div class="field"><label>Categoria</label><select><option>Carburante</option><option>Spesa</option><option>Affitto</option><option>Ristoranti</option><option>Svago</option><option>Attrezzatura</option><option>Software</option><option>Altro</option></select></div>
+              <div class="field"><label>Importo</label><input placeholder="0,00 €"></div>
+              <div class="field"><label>Data</label><input type="date"></div>
+            </div>
+
+            <div class="finance-table">
+              <div class="finance-row finance-row-head"><span>Data</span><span>Categoria</span><span>Descrizione</span><span>Importo</span></div>
+              <div class="finance-row"><span>--/--</span><span>Carburante</span><span>Movimento esempio</span><strong>- €0,00</strong></div>
+              <div class="finance-row"><span>--/--</span><span>Entrata</span><span>Fattura esempio</span><strong>+ €0,00</strong></div>
+            </div>
+          </div>
+
+          <aside class="card finance-side">
+            <h2>Uscite per categoria</h2>
+            <div class="finance-donut"><span>€0</span></div>
+            <div class="finance-legend">
+              <div><i style="--dot:#1E2A38"></i>Carburante <b>0%</b></div>
+              <div><i style="--dot:#f97316"></i>Affitto <b>0%</b></div>
+              <div><i style="--dot:#22c55e"></i>Ristoranti <b>0%</b></div>
+              <div><i style="--dot:#94a3b8"></i>Altro <b>0%</b></div>
+            </div>
+          </aside>
         </section>
-        <section class="card"><h2>Categorie</h2><div class="category-pills"><span>Carburante</span><span>Spesa</span><span>Affitto</span><span>Ristoranti</span><span>Svago</span><span>Commercialista</span><span>Attrezzatura</span><span>Software</span><span>Altro</span></div></section>
+
+        <section class="card">
+          <div class="card-head">
+            <div>
+              <h2>Categorie</h2>
+              <p class="muted">Categorie unificate. Niente divisione fiscale lavoro/personale.</p>
+            </div>
+          </div>
+          <div class="category-pills finance-cats">
+            <span>Carburante</span><span>Spesa</span><span>Affitto</span><span>Ristoranti</span><span>Svago</span><span>Commercialista</span><span>Attrezzatura</span><span>Software</span><span>Telefonia</span><span>Assicurazioni</span><span>Vestiario</span><span>Altro</span>
+          </div>
+        </section>
       </section>
 
       <section id="settingsPage" class="page desktop-only">
@@ -368,7 +422,7 @@
 
 
   <script>
-    if('serviceWorker' in navigator){window.addEventListener('load',()=>navigator.serviceWorker.register('service-worker_v10f.js'));}
+    if('serviceWorker' in navigator){window.addEventListener('load',()=>navigator.serviceWorker.register('service-worker_v10g.js'));}
   </script>
   <script src="firebase.js"></script>
   <script src="app.js"></script>
