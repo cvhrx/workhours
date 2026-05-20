@@ -192,24 +192,99 @@ function updatePdfPreview(arr, summary){
   tbody.innerHTML=rows.map(([name,g])=>`<tr><td>${name}</td><td>${g.ore.toFixed(1)}h</td><td>${Math.round(g.km)}</td><td>${euro(g.stimato)}</td></tr>`).join('');
 }
 
+function numVal(id, fallback=0){
+  const el = document.getElementById(id);
+  const n = parseFloat((el?.value ?? '').toString().replace(',', '.'));
+  return Number.isFinite(n) ? n : fallback;
+}
+function setVal(id, value){
+  const el = document.getElementById(id);
+  if(el) el.value = (value ?? '');
+}
+function setSelectVal(id, value){
+  const el = document.getElementById(id);
+  if(el && value) el.value = value;
+}
 function setTariffInputs(t){
-  $('#tarOrd').value = (t.ord ?? 0);
-  $('#tarStr').value = (t.str ?? 0);
-  const tf = document.getElementById('tarStrFest');
-  if(tf) tf.value = (t.strFest ?? 0);
-  $('#tarKm').value = (t.km ?? 0);
-  $('#tarTrasf').value = (t.trasf ?? 0);
-  $('#tarPern').value = (t.pern ?? 0);
+  t = t || {};
+  const loc = t.locale || {};
+  const it = t.italy || {};
+  const ab = t.abroad || {};
+
+  const locOrd = loc.ord ?? t.ord ?? 0;
+  const locKm = loc.km ?? t.km ?? 0;
+  const locOver = loc.overtimePct ?? (locOrd ? Math.max(0, (((t.str ?? locOrd) / locOrd) - 1) * 100) : 25);
+  const locHol = loc.holidayPct ?? (locOrd ? Math.max(0, (((t.strFest ?? locOrd) / locOrd) - 1) * 100) : 25);
+
+  setVal('tarOrd', locOrd);
+  setVal('tarKm', locKm);
+  setVal('tarLocOverPct', Math.round(locOver*100)/100);
+  setVal('tarLocHolidayPct', Math.round(locHol*100)/100);
+
+  setVal('tarItOrd', it.ord ?? t.ord ?? 0);
+  setVal('tarItKm', it.km ?? t.km ?? 0);
+  setVal('tarTrasf', it.travelDay ?? t.trasf ?? 0);
+  setVal('tarPern', it.hotel ?? t.pern ?? 0);
+  setSelectVal('tarItTravelMode', it.travelMode || 'none');
+  setVal('tarItTravelPct', it.travelPct ?? 75);
+  setVal('tarItTravelFixed', it.travelFixed ?? 0);
+  setVal('tarItOverPct', it.overtimePct ?? locOver ?? 25);
+  setVal('tarItHolidayPct', it.holidayPct ?? locHol ?? 25);
+
+  setVal('tarAbroadOrd', ab.ord ?? t.strFest ?? t.ord ?? 0);
+  setVal('tarAbroadKm', ab.km ?? t.km ?? 0);
+  setVal('tarAbroadTrasf', ab.travelDay ?? t.trasf ?? 0);
+  setVal('tarAbroadPern', ab.hotel ?? t.pern ?? 0);
+  setSelectVal('tarAbroadTravelMode', ab.travelMode || 'none');
+  setVal('tarAbroadTravelPct', ab.travelPct ?? 75);
+  setVal('tarAbroadTravelFixed', ab.travelFixed ?? 0);
+  setVal('tarAbroadOverPct', ab.overtimePct ?? locOver ?? 25);
+  setVal('tarAbroadHolidayPct', ab.holidayPct ?? locHol ?? 25);
 }
 
 function getTariffInputs(){
+  const locOrd = numVal('tarOrd');
+  const locKm = numVal('tarKm');
+  const locOverPct = numVal('tarLocOverPct', 25);
+  const locHolidayPct = numVal('tarLocHolidayPct', 25);
+  const legacyStr = locOrd * (1 + locOverPct / 100);
+  const legacyStrFest = locOrd * (1 + locHolidayPct / 100);
+
   return {
-    ord: parseFloat($('#tarOrd').value||'0')||0,
-    str: parseFloat($('#tarStr').value||'0')||0,
-    strFest: parseFloat((document.getElementById('tarStrFest')?.value)||'0')||0,
-    km: parseFloat($('#tarKm').value||'0')||0,
-    trasf: parseFloat($('#tarTrasf').value||'0')||0,
-    pern: parseFloat($('#tarPern').value||'0')||0
+    ord: locOrd,
+    str: legacyStr,
+    strFest: legacyStrFest,
+    km: locKm,
+    trasf: numVal('tarTrasf'),
+    pern: numVal('tarPern'),
+    locale: {
+      ord: locOrd,
+      km: locKm,
+      overtimePct: locOverPct,
+      holidayPct: locHolidayPct
+    },
+    italy: {
+      ord: numVal('tarItOrd', locOrd),
+      km: numVal('tarItKm', locKm),
+      travelDay: numVal('tarTrasf'),
+      hotel: numVal('tarPern'),
+      travelMode: document.getElementById('tarItTravelMode')?.value || 'none',
+      travelPct: numVal('tarItTravelPct', 75),
+      travelFixed: numVal('tarItTravelFixed', 0),
+      overtimePct: numVal('tarItOverPct', locOverPct),
+      holidayPct: numVal('tarItHolidayPct', locHolidayPct)
+    },
+    abroad: {
+      ord: numVal('tarAbroadOrd', locOrd),
+      km: numVal('tarAbroadKm', locKm),
+      travelDay: numVal('tarAbroadTrasf'),
+      hotel: numVal('tarAbroadPern'),
+      travelMode: document.getElementById('tarAbroadTravelMode')?.value || 'none',
+      travelPct: numVal('tarAbroadTravelPct', 75),
+      travelFixed: numVal('tarAbroadTravelFixed', 0),
+      overtimePct: numVal('tarAbroadOverPct', locOverPct),
+      holidayPct: numVal('tarAbroadHolidayPct', locHolidayPct)
+    }
   };
 }
 

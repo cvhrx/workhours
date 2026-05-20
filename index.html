@@ -227,32 +227,48 @@
                 <div class="field tar-apply"><label>Applica a</label><select id="tarClientSelect"><option value="-1">Globali (default)</option></select></div>
               </div>
 
-              <div class="tariff-mode-grid">
-                <div class="tariff-mode-card mode-local">
-                  <div class="tariff-mode-title"><span>Locale</span><strong>Provincia / zona</strong></div>
-                  <div class="tariff-mini-grid">
+              <div class="tariff-mode-grid tariff-v2-grid">
+                <div class="tariff-mode-card mode-local tariff-v2-card">
+                  <div class="tariff-mode-title"><span>Locale</span><strong>Zona / provincia</strong></div>
+                  <div class="tariff-mini-grid tariff-v2-fields">
                     <div class="field"><label>€ / h ordinarie</label><input id="tarOrd" inputmode="decimal" value="12"></div>
                     <div class="field"><label>€ / km</label><input id="tarKm" inputmode="decimal" value="0.40"></div>
+                    <div class="field"><label>Straordinario %</label><input id="tarLocOverPct" inputmode="decimal" value="25"></div>
+                    <div class="field"><label>Festivo / prefestivo %</label><input id="tarLocHolidayPct" inputmode="decimal" value="25"></div>
                   </div>
-                  <div class="tariff-hint">Maggiorazioni e nuova logica percentuale saranno collegate nello step tariffe v2.</div>
+                  <div class="tariff-hint">Straordinario e festivo vengono calcolati in percentuale sull'ora ordinaria locale.</div>
                 </div>
 
-                <div class="tariff-mode-card mode-italy">
-                  <div class="tariff-mode-title"><span>Trasferta Italia</span><strong>Ore + viaggio</strong></div>
-                  <div class="tariff-mini-grid">
-                    <div class="field"><label>€ / h straordinarie</label><input id="tarStr" inputmode="decimal" value="25"></div>
-                    <div class="field"><label>€ Trasferta</label><input id="tarTrasf" inputmode="decimal" value="50"></div>
+                <div class="tariff-mode-card mode-italy tariff-v2-card">
+                  <div class="tariff-mode-title"><span>Trasferta Italia</span><strong>Italia</strong></div>
+                  <div class="tariff-mini-grid tariff-v2-fields">
+                    <div class="field"><label>€ / h ordinarie</label><input id="tarItOrd" inputmode="decimal" value="33"></div>
+                    <div class="field"><label>€ / km</label><input id="tarItKm" inputmode="decimal" value="0.50"></div>
+                    <div class="field"><label>Trasferta giornaliera</label><input id="tarTrasf" inputmode="decimal" value="80"></div>
+                    <div class="field"><label>Pernotto</label><input id="tarPern" inputmode="decimal" value="95"></div>
+                    <div class="field"><label>Ore viaggio</label><select id="tarItTravelMode"><option value="none">Non pagate</option><option value="percent">Percentuale ora lavoro</option><option value="fixed">Valore fisso €/h</option></select></div>
+                    <div class="field"><label>Percentuale viaggio %</label><input id="tarItTravelPct" inputmode="decimal" value="75"></div>
+                    <div class="field"><label>Valore viaggio €/h</label><input id="tarItTravelFixed" inputmode="decimal" value="0"></div>
+                    <div class="field"><label>Straordinario %</label><input id="tarItOverPct" inputmode="decimal" value="25"></div>
+                    <div class="field"><label>Festivo / prefestivo %</label><input id="tarItHolidayPct" inputmode="decimal" value="25"></div>
                   </div>
-                  <div class="tariff-hint">Qui verranno separati ore lavoro, ore viaggio e trasferta non lavorata Italia.</div>
+                  <div class="tariff-hint">Le ore viaggio saranno poi calcolate in base al mezzo: aereo pagato, auto personale solo km, mezzo fornito non pagato.</div>
                 </div>
 
-                <div class="tariff-mode-card mode-abroad">
-                  <div class="tariff-mode-title"><span>Trasferta Estero</span><strong>Estero / fuori Italia</strong></div>
-                  <div class="tariff-mini-grid">
-                    <div class="field"><label>€ / h straord. festivi</label><input id="tarStrFest" inputmode="decimal" value="35"></div>
-                    <div class="field"><label>€ Pernotto</label><input id="tarPern" inputmode="decimal" value="80"></div>
+                <div class="tariff-mode-card mode-abroad tariff-v2-card">
+                  <div class="tariff-mode-title"><span>Trasferta Estero</span><strong>Estero</strong></div>
+                  <div class="tariff-mini-grid tariff-v2-fields">
+                    <div class="field"><label>€ / h ordinarie</label><input id="tarAbroadOrd" inputmode="decimal" value="38"></div>
+                    <div class="field"><label>€ / km</label><input id="tarAbroadKm" inputmode="decimal" value="0.50"></div>
+                    <div class="field"><label>Trasferta giornaliera</label><input id="tarAbroadTrasf" inputmode="decimal" value="120"></div>
+                    <div class="field"><label>Pernotto</label><input id="tarAbroadPern" inputmode="decimal" value="120"></div>
+                    <div class="field"><label>Ore viaggio</label><select id="tarAbroadTravelMode"><option value="none">Non pagate</option><option value="percent">Percentuale ora lavoro</option><option value="fixed">Valore fisso €/h</option></select></div>
+                    <div class="field"><label>Percentuale viaggio %</label><input id="tarAbroadTravelPct" inputmode="decimal" value="75"></div>
+                    <div class="field"><label>Valore viaggio €/h</label><input id="tarAbroadTravelFixed" inputmode="decimal" value="0"></div>
+                    <div class="field"><label>Straordinario %</label><input id="tarAbroadOverPct" inputmode="decimal" value="25"></div>
+                    <div class="field"><label>Festivo / prefestivo %</label><input id="tarAbroadHolidayPct" inputmode="decimal" value="25"></div>
                   </div>
-                  <div class="tariff-hint">Qui verranno separati ore estero, viaggio estero e trasferta non lavorata estero.</div>
+                  <div class="tariff-hint">Estero separato da Italia: valori, pernotto, viaggio e maggiorazioni possono essere diversi per cliente.</div>
                 </div>
               </div>
 
@@ -419,7 +435,7 @@
 
 
   <script>
-    if('serviceWorker' in navigator){window.addEventListener('load',()=>navigator.serviceWorker.register('service-worker_v10h3.js'));}
+    if('serviceWorker' in navigator){window.addEventListener('load',()=>navigator.serviceWorker.register('service-worker_v11a.js'));}
   </script>
   <script src="firebase.js"></script>
   <script src="app.js"></script>
