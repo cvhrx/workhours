@@ -53,8 +53,9 @@ document.addEventListener('DOMContentLoaded', ()=>{
     }catch(e){ console.error('REG ERROR', e); alert(e.message||e.code); }
   };
 
-  $('#chipTrasf').onclick = ()=> $('#chipTrasf').classList.toggle('active');
-  $('#chipPern').onclick  = ()=> $('#chipPern').classList.toggle('active');
+  $('#chipTrasf').onclick = ()=>{ $('#chipTrasf').classList.toggle('active'); updateDayEstimate(); };
+  $('#chipPern').onclick  = ()=>{ $('#chipPern').classList.toggle('active'); updateDayEstimate(); };
+  const cf = document.getElementById('chipFestivo'); if(cf) cf.onclick = ()=>{ cf.classList.toggle('active'); updateDayEstimate(); };
   setupTravelControls();
   const settingsBtn = document.getElementById('btnSettings');
   if(settingsBtn) settingsBtn.onclick = ()=> showMainPage('settingsPage');
@@ -81,6 +82,7 @@ document.addEventListener('DOMContentLoaded', ()=>{
   if(dupBtn) dupBtn.onclick = duplicateYesterday;
   $('#btnSaveDay').onclick = saveDay;
   $('#btnExportPdf').onclick = exportPdf;
+  setupDayEstimateListeners();
   const tabList = document.getElementById('tabList');
   if(tabList) tabList.onclick = ()=> switchView('list');
   const tabCal = document.getElementById('tabCal');
@@ -129,10 +131,10 @@ function syncMobileDate(){
 
 function setupTravelControls(){
   document.querySelectorAll('.work-mode-chip').forEach(btn=>{
-    btn.addEventListener('click',()=> setWorkMode(btn.dataset.workMode || 'locale'));
+    btn.addEventListener('click',()=>{ setWorkMode(btn.dataset.workMode || 'locale'); updateDayEstimate(); });
   });
   document.querySelectorAll('.travel-vehicle-chip').forEach(btn=>{
-    btn.addEventListener('click',()=> setTravelVehicle(btn.dataset.travelVehicle || ''));
+    btn.addEventListener('click',()=>{ setTravelVehicle(btn.dataset.travelVehicle || ''); updateDayEstimate(); });
   });
   setWorkMode(getWorkMode());
   setTravelVehicle(getTravelVehicle());
@@ -557,6 +559,37 @@ function calculateDayTotals(day){
 function euro(v){
   return '€' + (safeNum(v,0)).toLocaleString('it-IT',{minimumFractionDigits:2,maximumFractionDigits:2});
 }
+
+function setText(id, value){
+  const el = document.getElementById(id);
+  if(el) el.textContent = value;
+}
+
+function setupDayEstimateListeners(){
+  const ids = ['in1h','in1m','out1h','out1m','in2h','in2m','out2h','out2m','km','clientSelect','travelH','note'];
+  ids.forEach(id=>{
+    const el = document.getElementById(id);
+    if(!el) return;
+    const ev = (el.tagName === 'SELECT') ? 'change' : 'input';
+    el.addEventListener(ev, updateDayEstimate);
+  });
+}
+
+function updateDayEstimate(){
+  try{
+    if(!document.getElementById('dayCalcTotal')) return;
+    const data = getPayload();
+    const calc = calculateDayTotals(data);
+    setText('dayCalcWorkH', (calc.totalH||0).toFixed(2)+'h');
+    setText('dayCalcOrdH', (calc.ordH||0).toFixed(2)+'h');
+    setText('dayCalcStrH', (calc.strH||0).toFixed(2)+'h');
+    setText('dayCalcTravelH', (calc.travelH||0).toFixed(2)+'h');
+    setText('dayCalcKm', String(Math.round(calc.km||0)));
+    setText('dayCalcTotal', euro(calc.total||0));
+  }catch(e){
+    // during startup some fields may not exist yet
+  }
+}
 function getPayload(){
   const h=(sel)=>document.querySelector(sel).value;
   const mk = (hh,mm)=> (hh+':'+mm);
@@ -582,6 +615,8 @@ function getPayload(){
     trasf: document.getElementById('chipTrasf').classList.contains('active') || getWorkMode() !== 'locale',
     pern:  document.getElementById('chipPern').classList.contains('active'),
     trasfertaNonLavorata: document.getElementById('chipPern').classList.contains('active'),
+    festivo: !!document.getElementById('chipFestivo')?.classList.contains('active'),
+    prefestivo: !!document.getElementById('chipFestivo')?.classList.contains('active'),
     note: document.getElementById('note').value||'',
     clientIndex
   };
@@ -910,8 +945,11 @@ async function duplicateYesterday(){
   document.getElementById('note').value = v.note||'';
   document.getElementById('chipTrasf').classList.toggle('active', !!v.trasf);
   document.getElementById('chipPern').classList.toggle('active', !!(v.trasfertaNonLavorata ?? v.pern));
+  const festDup = document.getElementById('chipFestivo');
+  if(festDup) festDup.classList.toggle('active', !!(v.festivo || v.prefestivo || v.holiday));
   applyTravelFields(v);
   document.getElementById('clientSelect').selectedIndex = (v.clientIndex??-1)+1;
+  updateDayEstimate();
   alert('Dati di ieri copiati. Controlla e salva la giornata.');
 }
 
@@ -943,6 +981,7 @@ async function loadDay(d){
     document.getElementById('chipPern').classList.toggle('active', !!(v.trasfertaNonLavorata ?? v.pern));
     applyTravelFields(v);
     document.getElementById('clientSelect').selectedIndex = (v.clientIndex??-1)+1;
+    updateDayEstimate();
   }else{
     // reset form when day is empty
     setTime('#in1h','#in1m','00:00');
@@ -957,6 +996,7 @@ async function loadDay(d){
     if(fest) fest.classList.remove('active');
     applyTravelFields({workMode:'locale', travelVehicle:'', travelH:0});
     document.getElementById('clientSelect').selectedIndex = 0;
+    updateDayEstimate();
   }
 }
 

@@ -1055,3 +1055,57 @@ body::before,.sidebar::before{
 @media(max-width:760px){
   #clientiPage .travel-rate-box .tariff-v2-fields{grid-template-columns:1fr!important;}
 }
+
+
+/* STEP11F4 - riepilogo calcoli giornata */
+.day-estimate-card{
+  margin-top:18px;
+  padding:18px;
+  border-radius:22px;
+  background:linear-gradient(135deg,#ffffff,#f8fafc);
+  border:1px solid rgba(15,23,42,.10);
+  box-shadow:0 10px 25px rgba(15,23,42,.08);
+}
+.estimate-title{
+  display:flex;
+  justify-content:space-between;
+  align-items:flex-start;
+  gap:16px;
+  margin-bottom:14px;
+}
+.estimate-title span{
+  display:block;
+  color:#64748b;
+  font-size:.9rem;
+  font-weight:700;
+}
+.estimate-title strong{
+  color:#15803d;
+  font-size:1.65rem;
+  line-height:1;
+}
+.estimate-grid{
+  display:grid;
+  grid-template-columns:repeat(5,minmax(0,1fr));
+  gap:10px;
+}
+.estimate-grid div{
+  background:#fff;
+  border:1px solid rgba(15,23,42,.08);
+  border-radius:16px;
+  padding:10px 12px;
+}
+.estimate-grid span{
+  display:block;
+  color:#64748b;
+  font-size:.76rem;
+  font-weight:700;
+}
+.estimate-grid strong{
+  color:#0f172a;
+  font-size:1rem;
+}
+@media(max-width:800px){
+  .estimate-grid{grid-template-columns:repeat(2,minmax(0,1fr));}
+  .estimate-title{flex-direction:column;}
+}

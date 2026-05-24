@@ -164,8 +164,22 @@
           <div class="row chips">
             <button type="button" id="chipTrasf" class="chip hidden">Trasferta</button>
             <button type="button" id="chipPern" class="chip">Trasferta non lavorata</button>
+            <button type="button" id="chipFestivo" class="chip">Festivo / prefestivo</button>
           </div>
           <div class="field"><label>Note</label><textarea id="note" rows="3" placeholder="Cliente / sede / attività"></textarea></div>
+          <div class="day-estimate-card">
+            <div class="estimate-title">
+              <span>Totale stimato giornata</span>
+              <strong id="dayCalcTotal">€0,00</strong>
+            </div>
+            <div class="estimate-grid">
+              <div><span>Ore lavoro</span><strong id="dayCalcWorkH">0.00h</strong></div>
+              <div><span>Ordinarie</span><strong id="dayCalcOrdH">0.00h</strong></div>
+              <div><span>Straordinarie</span><strong id="dayCalcStrH">0.00h</strong></div>
+              <div><span>Viaggio</span><strong id="dayCalcTravelH">0.00h</strong></div>
+              <div><span>KM fatturabili</span><strong id="dayCalcKm">0</strong></div>
+            </div>
+          </div>
           <div class="row gap action-row">
             <button type="button" class="btn primary" id="btnSaveDay">Salva</button>
             <button type="button" class="btn ghost" id="btnExportPdf">PDF</button>
@@ -505,7 +519,7 @@
 
 
   <script>
-    if('serviceWorker' in navigator){window.addEventListener('load',()=>navigator.serviceWorker.register('service-worker_v11f3.js'));}
+    if('serviceWorker' in navigator){window.addEventListener('load',()=>navigator.serviceWorker.register('service-worker_v11f4.js'));}
   </script>
   <script src="firebase.js"></script>
   <script src="app.js"></script>
