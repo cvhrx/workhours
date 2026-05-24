@@ -163,7 +163,7 @@ function setWorkMode(mode){
 }
 
 function setTravelVehicle(vehicle){
-  vehicle = ['auto','aereo','mezzo_fornito'].includes(vehicle) ? vehicle : 'auto';
+  vehicle = ['auto','aereo','mezzo_fornito'].includes(vehicle) ? vehicle : '';
   document.querySelectorAll('.travel-vehicle-chip').forEach(btn=>{
     btn.classList.toggle('active', btn.dataset.travelVehicle === vehicle);
   });
@@ -179,7 +179,7 @@ function getTravelHoursForPayload(){
 function applyTravelFields(v){
   const mode = v?.workMode || (v?.trasf ? 'italia' : 'locale');
   setWorkMode(mode);
-  setTravelVehicle(v?.travelVehicle || '');
+  setTravelVehicle(v?.travelVehicle ?? '');
   const travelH = document.getElementById('travelH');
   if(travelH) travelH.value = (mode === 'locale') ? '0' : (v?.travelH ?? 0);
 }
