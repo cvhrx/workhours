@@ -273,11 +273,33 @@
                     <div class="field"><label>€ / h ordinarie</label><input id="tarItOrd" inputmode="decimal" value="33"></div>
                     <div class="field"><label>€ / km</label><input id="tarItKm" inputmode="decimal" value="0.50"></div>
                     <div class="field"><label>Trasferta non lavorata</label><input id="tarPern" inputmode="decimal" value="80"></div>
-                    <div class="field"><label>Ore viaggio</label><select id="tarItTravelMode"><option value="none">Non pagate</option><option value="percent">Percentuale ora lavoro</option><option value="fixed">Valore fisso €/h</option></select></div>
-                    <div class="field"><label>Percentuale viaggio %</label><input id="tarItTravelPct" inputmode="decimal" value="75"></div>
-                    <div class="field"><label>Valore viaggio €/h</label><input id="tarItTravelFixed" inputmode="decimal" value="0"></div>
                     <div class="field"><label>Straordinario %</label><input id="tarItOverPct" inputmode="decimal" value="25"></div>
                     <div class="field"><label>Festivo / prefestivo %</label><input id="tarItHolidayPct" inputmode="decimal" value="25"></div>
+                    <div class="travel-rate-box full-span">
+                      <h4>Ore viaggio</h4>
+                      <div class="tariff-mini-grid tariff-v2-fields">
+                        <div class="field"><label>Metodo</label><select id="tarItTravelMode"><option value="percent">Percentuale</option><option value="fixed">Base oraria</option></select></div>
+                        <div class="field"><label>Valore</label><input id="tarItTravelPct" inputmode="decimal" value="100"></div>
+                      </div>
+                      <small>Regola generale. Es. 100% dell'ora ordinaria oppure valore fisso €/h.</small>
+                    </div>
+                    <div class="travel-rate-box full-span">
+                      <h4>Auto personale</h4>
+                      <div class="tariff-mini-grid tariff-v2-fields">
+                        <div class="field"><label>Metodo</label><select id="tarItAutoTravelMode"><option value="percent">Percentuale</option><option value="fixed">Base oraria</option></select></div>
+                        <div class="field"><label>Valore</label><input id="tarItAutoTravelValue" inputmode="decimal" value="100"></div>
+                      </div>
+                      <small>Da usare quando il viaggio è in auto personale. I KM restano separati.</small>
+                    </div>
+                    <div class="travel-rate-box full-span">
+                      <h4>Aereo</h4>
+                      <div class="field"><label>Percentuale ora ordinaria</label><input id="tarItAirTravelPct" inputmode="decimal" value="75"></div>
+                      <small>Es. 75% dell'ora ordinaria, modificabile per cliente.</small>
+                    </div>
+                    <div class="travel-rate-box full-span muted-box">
+                      <h4>Mezzo fornito</h4>
+                      <p>Da definire.</p>
+                    </div>
                   </div>
                   <div class="tariff-hint">Le ore viaggio saranno poi calcolate in base al mezzo: aereo pagato, auto personale solo km, mezzo fornito non pagato.</div>
                 </div>
@@ -288,11 +310,33 @@
                     <div class="field"><label>€ / h ordinarie</label><input id="tarAbroadOrd" inputmode="decimal" value="38"></div>
                     <div class="field"><label>€ / km</label><input id="tarAbroadKm" inputmode="decimal" value="0.50"></div>
                     <div class="field"><label>Trasferta non lavorata</label><input id="tarAbroadPern" inputmode="decimal" value="120"></div>
-                    <div class="field"><label>Ore viaggio</label><select id="tarAbroadTravelMode"><option value="none">Non pagate</option><option value="percent">Percentuale ora lavoro</option><option value="fixed">Valore fisso €/h</option></select></div>
-                    <div class="field"><label>Percentuale viaggio %</label><input id="tarAbroadTravelPct" inputmode="decimal" value="75"></div>
-                    <div class="field"><label>Valore viaggio €/h</label><input id="tarAbroadTravelFixed" inputmode="decimal" value="0"></div>
                     <div class="field"><label>Straordinario %</label><input id="tarAbroadOverPct" inputmode="decimal" value="25"></div>
                     <div class="field"><label>Festivo / prefestivo %</label><input id="tarAbroadHolidayPct" inputmode="decimal" value="25"></div>
+                    <div class="travel-rate-box full-span">
+                      <h4>Ore viaggio</h4>
+                      <div class="tariff-mini-grid tariff-v2-fields">
+                        <div class="field"><label>Metodo</label><select id="tarAbroadTravelMode"><option value="percent">Percentuale</option><option value="fixed">Base oraria</option></select></div>
+                        <div class="field"><label>Valore</label><input id="tarAbroadTravelPct" inputmode="decimal" value="100"></div>
+                      </div>
+                      <small>Regola generale. Es. 100% dell'ora ordinaria oppure valore fisso €/h.</small>
+                    </div>
+                    <div class="travel-rate-box full-span">
+                      <h4>Auto personale</h4>
+                      <div class="tariff-mini-grid tariff-v2-fields">
+                        <div class="field"><label>Metodo</label><select id="tarAbroadAutoTravelMode"><option value="percent">Percentuale</option><option value="fixed">Base oraria</option></select></div>
+                        <div class="field"><label>Valore</label><input id="tarAbroadAutoTravelValue" inputmode="decimal" value="100"></div>
+                      </div>
+                      <small>Da usare quando il viaggio è in auto personale. I KM restano separati.</small>
+                    </div>
+                    <div class="travel-rate-box full-span">
+                      <h4>Aereo</h4>
+                      <div class="field"><label>Percentuale ora ordinaria</label><input id="tarAbroadAirTravelPct" inputmode="decimal" value="75"></div>
+                      <small>Es. 75% dell'ora ordinaria, modificabile per cliente.</small>
+                    </div>
+                    <div class="travel-rate-box full-span muted-box">
+                      <h4>Mezzo fornito</h4>
+                      <p>Da definire.</p>
+                    </div>
                   </div>
                   <div class="tariff-hint">Estero separato da Italia: valori, trasferta non lavorata, viaggio e maggiorazioni possono essere diversi per cliente.</div>
                 </div>
@@ -461,7 +505,7 @@
 
 
   <script>
-    if('serviceWorker' in navigator){window.addEventListener('load',()=>navigator.serviceWorker.register('service-worker_v11e.js'));}
+    if('serviceWorker' in navigator){window.addEventListener('load',()=>navigator.serviceWorker.register('service-worker_v11fa.js'));}
   </script>
   <script src="firebase.js"></script>
   <script src="app.js"></script>

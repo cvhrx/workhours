@@ -1021,3 +1021,37 @@ body::before,.sidebar::before{
 
 /* STEP11C: legacy transfer chip hidden; only Trasferta non lavorata remains */
 #chipTrasf{display:none!important;}
+
+
+/* STEP 11F-A - Tariffe viaggio per mezzo */
+#clientiPage .travel-rate-box{
+  grid-column:1 / -1;
+  border:1px solid rgba(30,42,56,.12);
+  background:linear-gradient(180deg,#ffffff,#f8fafc);
+  border-radius:18px;
+  padding:14px;
+  box-shadow:0 10px 24px rgba(15,23,42,.07);
+}
+#clientiPage .travel-rate-box h4{
+  margin:0 0 10px;
+  color:var(--ink);
+  font-size:15px;
+}
+#clientiPage .travel-rate-box small,
+#clientiPage .travel-rate-box p{
+  display:block;
+  margin:8px 0 0;
+  color:var(--muted);
+  font-weight:700;
+  line-height:1.35;
+}
+#clientiPage .travel-rate-box.muted-box{
+  background:#f3f6fb;
+  border-style:dashed;
+}
+#clientiPage .travel-rate-box .tariff-v2-fields{
+  grid-template-columns:1fr 1fr!important;
+}
+@media(max-width:760px){
+  #clientiPage .travel-rate-box .tariff-v2-fields{grid-template-columns:1fr!important;}
+}

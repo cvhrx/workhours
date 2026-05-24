@@ -284,9 +284,12 @@ function setTariffInputs(t){
   setVal('tarItOrd', it.ord ?? t.ord ?? 0);
   setVal('tarItKm', it.km ?? t.km ?? 0);
   setVal('tarPern', itTravelDay);
-  setSelectVal('tarItTravelMode', it.travelMode || 'none');
-  setVal('tarItTravelPct', it.travelPct ?? 75);
+  setSelectVal('tarItTravelMode', it.travelMode || 'percent');
+  setVal('tarItTravelPct', it.travelPct ?? it.travelValue ?? 100);
   setVal('tarItTravelFixed', it.travelFixed ?? 0);
+  setSelectVal('tarItAutoTravelMode', it.autoTravelMode || it.travelMode || 'percent');
+  setVal('tarItAutoTravelValue', it.autoTravelValue ?? it.autoTravelPct ?? it.travelPct ?? 100);
+  setVal('tarItAirTravelPct', it.airTravelPct ?? 75);
   setVal('tarItOverPct', it.overtimePct ?? locOver ?? 25);
   setVal('tarItHolidayPct', it.holidayPct ?? locHol ?? 25);
 
@@ -294,9 +297,12 @@ function setTariffInputs(t){
   setVal('tarAbroadOrd', ab.ord ?? t.strFest ?? t.ord ?? 0);
   setVal('tarAbroadKm', ab.km ?? t.km ?? 0);
   setVal('tarAbroadPern', abTravelDay);
-  setSelectVal('tarAbroadTravelMode', ab.travelMode || 'none');
-  setVal('tarAbroadTravelPct', ab.travelPct ?? 75);
+  setSelectVal('tarAbroadTravelMode', ab.travelMode || 'percent');
+  setVal('tarAbroadTravelPct', ab.travelPct ?? ab.travelValue ?? 100);
   setVal('tarAbroadTravelFixed', ab.travelFixed ?? 0);
+  setSelectVal('tarAbroadAutoTravelMode', ab.autoTravelMode || ab.travelMode || 'percent');
+  setVal('tarAbroadAutoTravelValue', ab.autoTravelValue ?? ab.autoTravelPct ?? ab.travelPct ?? 100);
+  setVal('tarAbroadAirTravelPct', ab.airTravelPct ?? 75);
   setVal('tarAbroadOverPct', ab.overtimePct ?? locOver ?? 25);
   setVal('tarAbroadHolidayPct', ab.holidayPct ?? locHol ?? 25);
 }
@@ -327,9 +333,14 @@ function getTariffInputs(){
       km: numVal('tarItKm', locKm),
       travelDay: numVal('tarPern'),
       hotel: numVal('tarPern'),
-      travelMode: document.getElementById('tarItTravelMode')?.value || 'none',
-      travelPct: numVal('tarItTravelPct', 75),
-      travelFixed: numVal('tarItTravelFixed', 0),
+      travelMode: document.getElementById('tarItTravelMode')?.value || 'percent',
+      travelPct: numVal('tarItTravelPct', 100),
+      travelValue: numVal('tarItTravelPct', 100),
+      travelFixed: numVal('tarItTravelMode') === 'fixed' ? numVal('tarItTravelPct', 0) : 0,
+      autoTravelMode: document.getElementById('tarItAutoTravelMode')?.value || 'percent',
+      autoTravelValue: numVal('tarItAutoTravelValue', 100),
+      airTravelPct: numVal('tarItAirTravelPct', 75),
+      providedVehicleRule: 'Da definire',
       overtimePct: numVal('tarItOverPct', locOverPct),
       holidayPct: numVal('tarItHolidayPct', locHolidayPct)
     },
@@ -338,9 +349,14 @@ function getTariffInputs(){
       km: numVal('tarAbroadKm', locKm),
       travelDay: numVal('tarAbroadPern'),
       hotel: numVal('tarAbroadPern'),
-      travelMode: document.getElementById('tarAbroadTravelMode')?.value || 'none',
-      travelPct: numVal('tarAbroadTravelPct', 75),
-      travelFixed: numVal('tarAbroadTravelFixed', 0),
+      travelMode: document.getElementById('tarAbroadTravelMode')?.value || 'percent',
+      travelPct: numVal('tarAbroadTravelPct', 100),
+      travelValue: numVal('tarAbroadTravelPct', 100),
+      travelFixed: numVal('tarAbroadTravelMode') === 'fixed' ? numVal('tarAbroadTravelPct', 0) : 0,
+      autoTravelMode: document.getElementById('tarAbroadAutoTravelMode')?.value || 'percent',
+      autoTravelValue: numVal('tarAbroadAutoTravelValue', 100),
+      airTravelPct: numVal('tarAbroadAirTravelPct', 75),
+      providedVehicleRule: 'Da definire',
       overtimePct: numVal('tarAbroadOverPct', locOverPct),
       holidayPct: numVal('tarAbroadHolidayPct', locHolidayPct)
     }
