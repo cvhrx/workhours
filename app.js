@@ -446,6 +446,7 @@ function getPayload(){
     travelH: Number(getTravelHoursForPayload().toFixed(2)),
     trasf: document.getElementById('chipTrasf').classList.contains('active') || getWorkMode() !== 'locale',
     pern:  document.getElementById('chipPern').classList.contains('active'),
+    trasfertaNonLavorata: document.getElementById('chipPern').classList.contains('active'),
     note: document.getElementById('note').value||'',
     clientIndex
   };
@@ -758,7 +759,7 @@ async function duplicateYesterday(){
   document.getElementById('km').value = v.km||0;
   document.getElementById('note').value = v.note||'';
   document.getElementById('chipTrasf').classList.toggle('active', !!v.trasf);
-  document.getElementById('chipPern').classList.toggle('active', !!v.pern);
+  document.getElementById('chipPern').classList.toggle('active', !!(v.trasfertaNonLavorata ?? v.pern));
   applyTravelFields(v);
   document.getElementById('clientSelect').selectedIndex = (v.clientIndex??-1)+1;
   alert('Dati di ieri copiati. Controlla e salva la giornata.');
@@ -789,7 +790,7 @@ async function loadDay(d){
     document.getElementById('km').value = v.km||0;
     document.getElementById('note').value = v.note||'';
     document.getElementById('chipTrasf').classList.toggle('active', !!v.trasf);
-    document.getElementById('chipPern').classList.toggle('active', !!v.pern);
+    document.getElementById('chipPern').classList.toggle('active', !!(v.trasfertaNonLavorata ?? v.pern));
     applyTravelFields(v);
     document.getElementById('clientSelect').selectedIndex = (v.clientIndex??-1)+1;
   }else{
