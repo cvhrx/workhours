@@ -280,20 +280,20 @@ function setTariffInputs(t){
   setVal('tarLocOverPct', Math.round(locOver*100)/100);
   setVal('tarLocHolidayPct', Math.round(locHol*100)/100);
 
+  const itTravelDay = it.travelDay ?? it.hotel ?? t.pern ?? t.trasf ?? 0;
   setVal('tarItOrd', it.ord ?? t.ord ?? 0);
   setVal('tarItKm', it.km ?? t.km ?? 0);
-  setVal('tarTrasf', it.travelDay ?? t.trasf ?? 0);
-  setVal('tarPern', it.hotel ?? t.pern ?? 0);
+  setVal('tarPern', itTravelDay);
   setSelectVal('tarItTravelMode', it.travelMode || 'none');
   setVal('tarItTravelPct', it.travelPct ?? 75);
   setVal('tarItTravelFixed', it.travelFixed ?? 0);
   setVal('tarItOverPct', it.overtimePct ?? locOver ?? 25);
   setVal('tarItHolidayPct', it.holidayPct ?? locHol ?? 25);
 
+  const abTravelDay = ab.travelDay ?? ab.hotel ?? t.pern ?? t.trasf ?? 0;
   setVal('tarAbroadOrd', ab.ord ?? t.strFest ?? t.ord ?? 0);
   setVal('tarAbroadKm', ab.km ?? t.km ?? 0);
-  setVal('tarAbroadTrasf', ab.travelDay ?? t.trasf ?? 0);
-  setVal('tarAbroadPern', ab.hotel ?? t.pern ?? 0);
+  setVal('tarAbroadPern', abTravelDay);
   setSelectVal('tarAbroadTravelMode', ab.travelMode || 'none');
   setVal('tarAbroadTravelPct', ab.travelPct ?? 75);
   setVal('tarAbroadTravelFixed', ab.travelFixed ?? 0);
@@ -314,7 +314,7 @@ function getTariffInputs(){
     str: legacyStr,
     strFest: legacyStrFest,
     km: locKm,
-    trasf: numVal('tarTrasf'),
+    trasf: 0,
     pern: numVal('tarPern'),
     locale: {
       ord: locOrd,
@@ -325,7 +325,7 @@ function getTariffInputs(){
     italy: {
       ord: numVal('tarItOrd', locOrd),
       km: numVal('tarItKm', locKm),
-      travelDay: numVal('tarTrasf'),
+      travelDay: numVal('tarPern'),
       hotel: numVal('tarPern'),
       travelMode: document.getElementById('tarItTravelMode')?.value || 'none',
       travelPct: numVal('tarItTravelPct', 75),
@@ -336,7 +336,7 @@ function getTariffInputs(){
     abroad: {
       ord: numVal('tarAbroadOrd', locOrd),
       km: numVal('tarAbroadKm', locKm),
-      travelDay: numVal('tarAbroadTrasf'),
+      travelDay: numVal('tarAbroadPern'),
       hotel: numVal('tarAbroadPern'),
       travelMode: document.getElementById('tarAbroadTravelMode')?.value || 'none',
       travelPct: numVal('tarAbroadTravelPct', 75),
@@ -373,6 +373,15 @@ function loadTariffsSelection(){
   }
   const c = state.clients?.[v];
   setTariffInputs((c && c.tariffs) ? c.tariffs : (state.tariffs||{}));
+}
+
+function syncTariffSelectionToClient(i){
+  const sel = document.getElementById('tarClientSelect');
+  if(!sel) return;
+  if(i >= 0 && [...sel.options].some(o=>o.value===String(i))){
+    sel.value = String(i);
+    loadTariffsSelection();
+  }
 }
 function togglePane(which){
   const tar = which==='Tar';
@@ -622,6 +631,7 @@ function fillClientForm(i){
   document.getElementById('cliIndirizzo').value = c?.indirizzo || '';
   document.getElementById('cliSdi').value = c?.sdi || '';
   updateClientHero(i);
+  syncTariffSelectionToClient(i);
 }
 
 function readClientForm(){
@@ -667,11 +677,14 @@ async function saveClientUpsert(){
   }
 
   // create new
+  data.tariffs = data.tariffs || (state.tariffs ? JSON.parse(JSON.stringify(state.tariffs)) : undefined);
   const ref = await col.add(data);
   state.clients.push({id: ref.id, ...data});
   renderClients();
   const sel = document.getElementById('cliSelect');
   if(sel) sel.value = ref.id;
+  const newIdx = state.clients.findIndex(c=>c.id===ref.id);
+  syncTariffSelectionToClient(newIdx);
   alert('Salvataggio effettuato');
 }
 
