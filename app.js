@@ -132,7 +132,7 @@ function setupTravelControls(){
     btn.addEventListener('click',()=> setWorkMode(btn.dataset.workMode || 'locale'));
   });
   document.querySelectorAll('.travel-vehicle-chip').forEach(btn=>{
-    btn.addEventListener('click',()=> setTravelVehicle(btn.dataset.travelVehicle || 'auto'));
+    btn.addEventListener('click',()=> setTravelVehicle(btn.dataset.travelVehicle || ''));
   });
   setWorkMode(getWorkMode());
   setTravelVehicle(getTravelVehicle());
@@ -143,7 +143,7 @@ function getWorkMode(){
 }
 
 function getTravelVehicle(){
-  return document.querySelector('.travel-vehicle-chip.active')?.dataset.travelVehicle || 'auto';
+  return document.querySelector('.travel-vehicle-chip.active')?.dataset.travelVehicle || '';
 }
 
 function setWorkMode(mode){
@@ -179,7 +179,7 @@ function getTravelHoursForPayload(){
 function applyTravelFields(v){
   const mode = v?.workMode || (v?.trasf ? 'italia' : 'locale');
   setWorkMode(mode);
-  setTravelVehicle(v?.travelVehicle || 'auto');
+  setTravelVehicle(v?.travelVehicle || '');
   const travelH = document.getElementById('travelH');
   if(travelH) travelH.value = (mode === 'locale') ? '0' : (v?.travelH ?? 0);
 }
@@ -518,7 +518,7 @@ function calcTravelRate(profile, vehicle){
 function calculateDayTotals(day){
   const d = day || {};
   const mode = d.workMode || (d.trasf ? 'italia' : 'locale');
-  const vehicle = mode === 'locale' ? '' : (d.travelVehicle || 'auto');
+  const vehicle = mode === 'locale' ? '' : (d.travelVehicle || '');
   const tariffs = getClientTariffs(d.clientIndex ?? -1);
   const profile = getTariffProfile(tariffs, mode);
 
@@ -955,7 +955,7 @@ async function loadDay(d){
     document.getElementById('chipPern').classList.remove('active');
     const fest = document.getElementById('chipFestivo');
     if(fest) fest.classList.remove('active');
-    applyTravelFields({workMode:'locale', travelVehicle:'auto', travelH:0});
+    applyTravelFields({workMode:'locale', travelVehicle:'', travelH:0});
     document.getElementById('clientSelect').selectedIndex = 0;
   }
 }
