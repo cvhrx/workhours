@@ -186,13 +186,13 @@ function applyTravelFields(v){
 
 function updateDashboard(arr){
   const filled=arr.filter(v=>(v.totalH||0)>0 || (v.km||0)>0 || v.note);
-  const ord=arr.reduce((s,v)=>s+(v.ordH||0),0);
-  const str=arr.reduce((s,v)=>s+(v.strH||0),0);
-  const travel=arr.reduce((s,v)=>s+(v.travelH||0),0);
-  const km=arr.reduce((s,v)=>s+(v.km||0),0);
+  const calcArr = arr.map(v=>calculateDayTotals(v));
+  const ord=calcArr.reduce((s,v)=>s+(v.ordH||0),0);
+  const str=calcArr.reduce((s,v)=>s+(v.strH||0),0);
+  const travel=calcArr.reduce((s,v)=>s+(v.travelH||0),0);
+  const km=calcArr.reduce((s,v)=>s+(v.km||0),0);
   const total=ord+str+travel;
-  const t=state.tariffs || {ord:0,str:0,km:0,trasf:0,pern:0};
-  const stimato = (ord*(t.ord||0)) + (str*(t.str||0)) + (km*(t.km||0));
+  const stimato = calcArr.reduce((s,v)=>s+(v.total||0),0);
   const set=(id,val)=>{const el=document.getElementById(id); if(el) el.textContent=val;};
   set('dashOreMese', total.toFixed(1)+'h');
   set('dashKmMese', Math.round(km));
@@ -438,6 +438,125 @@ function timeDiff(a,b){
   const d=((bh*60+bm)-(ah*60+am))/60;
   return Math.max(0, d);
 }
+
+
+function safeNum(v, fallback=0){
+  const n = parseFloat(String(v ?? '').replace(',', '.'));
+  return Number.isFinite(n) ? n : fallback;
+}
+
+function cloneObj(o){
+  return JSON.parse(JSON.stringify(o || {}));
+}
+
+function getClientTariffs(idx){
+  const noIdx = getNoClientIndex();
+  if(idx >= 0 && idx !== noIdx && state.clients?.[idx]?.tariffs) return state.clients[idx].tariffs;
+  if((idx === -2 || idx === noIdx) && state.tariffsNoClient) return state.tariffsNoClient;
+  return state.tariffs || {ord:0,str:0,strFest:0,km:0,trasf:0,pern:0};
+}
+
+function getTariffProfile(t, mode){
+  t = t || {};
+  if(mode === 'italia'){
+    return {
+      ord: safeNum(t.italy?.ord, safeNum(t.ord, 0)),
+      km: safeNum(t.italy?.km, safeNum(t.km, 0)),
+      overtimePct: safeNum(t.italy?.overtimePct, 25),
+      holidayPct: safeNum(t.italy?.holidayPct, 25),
+      travelDay: safeNum(t.italy?.travelDay, safeNum(t.italy?.hotel, safeNum(t.pern, 0))),
+      travelMode: t.italy?.travelMode || 'percent',
+      travelPct: safeNum(t.italy?.travelPct ?? t.italy?.travelValue, 100),
+      travelFixed: safeNum(t.italy?.travelFixed, 0),
+      autoTravelMode: t.italy?.autoTravelMode || t.italy?.travelMode || 'percent',
+      autoTravelValue: safeNum(t.italy?.autoTravelValue ?? t.italy?.autoTravelPct ?? t.italy?.travelPct, 100),
+      airTravelPct: safeNum(t.italy?.airTravelPct, 75)
+    };
+  }
+  if(mode === 'estero'){
+    return {
+      ord: safeNum(t.abroad?.ord, safeNum(t.ord, 0)),
+      km: safeNum(t.abroad?.km, safeNum(t.km, 0)),
+      overtimePct: safeNum(t.abroad?.overtimePct, 25),
+      holidayPct: safeNum(t.abroad?.holidayPct, 25),
+      travelDay: safeNum(t.abroad?.travelDay, safeNum(t.abroad?.hotel, safeNum(t.pern, 0))),
+      travelMode: t.abroad?.travelMode || 'percent',
+      travelPct: safeNum(t.abroad?.travelPct ?? t.abroad?.travelValue, 100),
+      travelFixed: safeNum(t.abroad?.travelFixed, 0),
+      autoTravelMode: t.abroad?.autoTravelMode || t.abroad?.travelMode || 'percent',
+      autoTravelValue: safeNum(t.abroad?.autoTravelValue ?? t.abroad?.autoTravelPct ?? t.abroad?.travelPct, 100),
+      airTravelPct: safeNum(t.abroad?.airTravelPct, 75)
+    };
+  }
+  return {
+    ord: safeNum(t.locale?.ord, safeNum(t.ord, 0)),
+    km: safeNum(t.locale?.km, safeNum(t.km, 0)),
+    overtimePct: safeNum(t.locale?.overtimePct, 25),
+    holidayPct: safeNum(t.locale?.holidayPct, 25),
+    travelDay: 0,
+    travelMode: 'none',
+    travelPct: 0,
+    travelFixed: 0,
+    autoTravelMode: 'none',
+    autoTravelValue: 0,
+    airTravelPct: 0
+  };
+}
+
+function calcTravelRate(profile, vehicle){
+  const base = safeNum(profile.ord, 0);
+  if(vehicle === 'aereo') return base * safeNum(profile.airTravelPct, 75) / 100;
+  if(vehicle === 'auto'){
+    if(profile.autoTravelMode === 'fixed') return safeNum(profile.autoTravelValue, 0);
+    return base * safeNum(profile.autoTravelValue, 100) / 100;
+  }
+  if(vehicle === 'mezzo_fornito') return 0; // da definire: per ora non fatturato
+  if(profile.travelMode === 'fixed') return safeNum(profile.travelFixed || profile.travelPct, 0);
+  return base * safeNum(profile.travelPct, 100) / 100;
+}
+
+function calculateDayTotals(day){
+  const d = day || {};
+  const mode = d.workMode || (d.trasf ? 'italia' : 'locale');
+  const vehicle = mode === 'locale' ? '' : (d.travelVehicle || 'auto');
+  const tariffs = getClientTariffs(d.clientIndex ?? -1);
+  const profile = getTariffProfile(tariffs, mode);
+
+  const totalH = safeNum(d.totalH, safeNum(d.ordH,0) + safeNum(d.strH,0));
+  const ordH = Math.min(8, totalH);
+  const strH = Math.max(0, totalH - 8);
+  const travelH = mode === 'locale' ? 0 : safeNum(d.travelH, 0);
+  const kmQty = (vehicle === 'aereo' || vehicle === 'mezzo_fornito') ? 0 : safeNum(d.km, 0);
+
+  const baseRate = safeNum(profile.ord, 0);
+  const overtimeRate = baseRate * (1 + safeNum(profile.overtimePct, 0) / 100);
+  const holidayRate = baseRate * (1 + safeNum(profile.holidayPct, 0) / 100);
+  const isHoliday = !!(d.festivo || d.holiday || d.prefestivo);
+
+  let ordAmount = ordH * (isHoliday ? holidayRate : baseRate);
+  let strAmount = strH * (isHoliday ? holidayRate : overtimeRate);
+  const travelRate = calcTravelRate(profile, vehicle);
+  const travelAmount = travelH * travelRate;
+  const kmAmount = kmQty * safeNum(profile.km, 0);
+  const travelDayAmount = (mode !== 'locale' && (d.trasfertaNonLavorata ?? d.pern)) ? safeNum(profile.travelDay, 0) : 0;
+  const total = ordAmount + strAmount + travelAmount + kmAmount + travelDayAmount;
+
+  return {
+    mode, vehicle,
+    ordH: Number(ordH.toFixed(2)),
+    strH: Number(strH.toFixed(2)),
+    totalH: Number(totalH.toFixed(2)),
+    travelH: Number(travelH.toFixed(2)),
+    km: Number(kmQty.toFixed(2)),
+    baseRate, overtimeRate, holidayRate, travelRate,
+    ordAmount, strAmount, travelAmount, kmAmount, travelDayAmount,
+    total: Number(total.toFixed(2))
+  };
+}
+
+function euro(v){
+  return '€' + (safeNum(v,0)).toLocaleString('it-IT',{minimumFractionDigits:2,maximumFractionDigits:2});
+}
 function getPayload(){
   const h=(sel)=>document.querySelector(sel).value;
   const mk = (hh,mm)=> (hh+':'+mm);
@@ -451,7 +570,7 @@ function getPayload(){
   const ord = Math.min(8, total);
   const str = Math.max(0, total-8);
   const clientIndex = Math.max(-1, (document.getElementById('clientSelect').selectedIndex||0) - 1);
-  return {
+  const base = {
     in1, out1, in2, out2,
     ordH: Number(ord.toFixed(2)),
     strH: Number(str.toFixed(2)),
@@ -465,6 +584,21 @@ function getPayload(){
     trasfertaNonLavorata: document.getElementById('chipPern').classList.contains('active'),
     note: document.getElementById('note').value||'',
     clientIndex
+  };
+  const calc = calculateDayTotals(base);
+  return {
+    ...base,
+    ordH: calc.ordH,
+    strH: calc.strH,
+    totalH: calc.totalH,
+    billableKm: calc.km,
+    billableTravelH: calc.travelH,
+    billableTravelRate: calc.travelRate,
+    workAmount: Number((calc.ordAmount + calc.strAmount).toFixed(2)),
+    travelAmount: Number(calc.travelAmount.toFixed(2)),
+    kmAmount: Number(calc.kmAmount.toFixed(2)),
+    travelDayAmount: Number(calc.travelDayAmount.toFixed(2)),
+    estimatedTotal: calc.total
   };
 }
 
@@ -902,16 +1036,18 @@ async function loadMonth(yyyyMM){
 
 function showDayDetail(v){
   const cli = (state.clients||[])[v.clientIndex]?.ragione || '—';
+  const calc = calculateDayTotals(v);
   const detailHtml = `<div class="detail-date"><strong>${fmtIT(v.id)}</strong><span>${cli}</span></div>
     <div class="detail-grid">
       <div><span>Ordinarie</span><strong>${(v.ordH||0).toFixed(2)}h</strong></div>
       <div><span>Straordinarie</span><strong>${(v.strH||0).toFixed(2)}h</strong></div>
-      <div><span>KM</span><strong>${v.km||0}</strong></div>
-      <div><span>Totale ore</span><strong>${(v.totalH||0).toFixed(2)}h</strong></div>
+      <div><span>KM fatturabili</span><strong>${(calc.km||0).toFixed(0)}</strong></div>
+      <div><span>Totale stimato</span><strong>${euro(calc.total)}</strong></div>
     </div>
     <div class="detail-lines">
       <p><b>Orari:</b> ${v.in1||'-'} → ${v.out1||'-'} · ${v.in2||'-'} → ${v.out2||'-'}</p>
-      <p><b>Extra:</b> Trasferta ${v.trasf?'Sì':'No'} · Trasferta non lavorata ${v.pern?'Sì':'No'}</p>
+      <p><b>Viaggio:</b> ${(calc.travelH||0).toFixed(2)}h · Mezzo: ${v.travelVehicle || '—'} · ${euro(calc.travelAmount)}</p>
+      <p><b>Extra:</b> Trasferta ${v.trasf?'Sì':'No'} · Trasferta non lavorata ${(v.trasfertaNonLavorata ?? v.pern)?'Sì':'No'}</p>
       <p><b>Note:</b> ${v.note||'—'}</p>
     </div>
     <button type="button" class="btn primary" id="btnEditCalendarDay">Modifica</button>`;
