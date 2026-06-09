@@ -1384,19 +1384,29 @@ async function exportPdf(){
   const addModeRows = (mode)=>{
     const b = summary[mode];
     if(!b || Math.abs(b.total) < 0.005) return;
-    rowsSum.push([{content: modeTitle(mode), colSpan: 3, styles:{fillColor:[232,237,245],textColor:[30,42,56],fontStyle:'bold'}}]);
 
-    rowsSum.push(['Ore ordinarie', b.ordQty.toFixed(2), euro(b.ordAmt)]);
-    rowsSum.push(['Ore straordinarie', b.strQty.toFixed(2), euro(b.strAmt)]);
+    const title = modeTitle(mode);
+    rowsSum.push([{content: title, colSpan: 3, styles:{fillColor:[232,237,245],textColor:[30,42,56],fontStyle:'bold'}}]);
 
-    if(mode !== 'locale') rowsSum.push(['Ore viaggio', b.travelQty.toFixed(2), euro(b.travelAmt)]);
+    const addLine = (label, qty, amount, formatQty='hours')=>{
+      const q = safeNum(qty,0);
+      const a = safeNum(amount,0);
+      if(Math.abs(q) < 0.005 && Math.abs(a) < 0.005) return;
+      let qText;
+      if(formatQty === 'km') qText = String(Math.round(q));
+      else if(formatQty === 'count') qText = String(Math.round(q));
+      else qText = q.toFixed(2);
+      rowsSum.push([label, qText, euro(a)]);
+    };
 
-    rowsSum.push(['KM', String(Math.round(b.kmQty)), euro(b.kmAmt)]);
+    addLine('Ore ordinarie', b.ordQty, b.ordAmt);
+    addLine('Ore straordinarie', b.strQty, b.strAmt);
+    if(mode !== 'locale') addLine('Ore viaggio', b.travelQty, b.travelAmt);
+    addLine('KM', b.kmQty, b.kmAmt, 'km');
+    if(mode !== 'locale') addLine('Trasferta non lavorata', b.travelDayQty, b.travelDayAmt, 'count');
+    addLine('Festivo / Prefestivo', b.holidayQty, b.holidayAmt);
 
-    if(mode !== 'locale') rowsSum.push(['Trasferta non lavorata', String(Math.round(b.travelDayQty)), euro(b.travelDayAmt)]);
-
-    rowsSum.push(['Festivo / Prefestivo', b.holidayQty.toFixed(2), euro(b.holidayAmt)]);
-    rowsSum.push([{content:'Totale ' + modeTitle(mode), colSpan:2, styles:{fontStyle:'bold',halign:'right'}}, {content:euro(b.total), styles:{fontStyle:'bold',halign:'right'}}]);
+    rowsSum.push([{content:'Totale ' + title, colSpan:2, styles:{fontStyle:'bold',halign:'right'}}, {content:euro(b.total), styles:{fontStyle:'bold',halign:'right'}}]);
   };
 
   addModeRows('locale');
