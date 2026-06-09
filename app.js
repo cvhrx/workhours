@@ -524,9 +524,11 @@ function calculateDayTotals(day){
   const tariffs = getClientTariffs(d.clientIndex ?? -1);
   const profile = getTariffProfile(tariffs, mode);
 
-  const totalH = safeNum(d.totalH, safeNum(d.ordH,0) + safeNum(d.strH,0));
-  const ordH = Math.min(8, totalH);
-  const strH = Math.max(0, totalH - 8);
+  // Regola ufficiale WorkHours: lo straordinario si calcola solo sulle ore lavoro timbrate.
+  // Le ore viaggio restano una voce separata e non fanno scattare straordinario.
+  const workH = safeNum(d.totalH, safeNum(d.ordH,0) + safeNum(d.strH,0));
+  const ordH = Math.min(8, workH);
+  const strH = Math.max(0, workH - 8);
   const travelH = mode === 'locale' ? 0 : safeNum(d.travelH, 0);
   const kmQty = (vehicle === 'aereo' || vehicle === 'mezzo_fornito') ? 0 : safeNum(d.km, 0);
 
@@ -547,7 +549,7 @@ function calculateDayTotals(day){
     mode, vehicle,
     ordH: Number(ordH.toFixed(2)),
     strH: Number(strH.toFixed(2)),
-    totalH: Number(totalH.toFixed(2)),
+    totalH: Number(workH.toFixed(2)),
     travelH: Number(travelH.toFixed(2)),
     km: Number(kmQty.toFixed(2)),
     baseRate, overtimeRate, holidayRate, travelRate,
