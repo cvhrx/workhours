@@ -1252,8 +1252,12 @@ async function exportPdf(){
     const c = state.clients?.[idx];
     return (c?.ragione) || ('Cliente ' + (idx+1));
   };
-  const modeLabel = (mode)=> mode==='italia' ? 'Trasferta Italia' : (mode==='estero' ? 'Trasferta Estero' : 'Locale');
+  const modeLabel = (mode)=> mode==='italia' ? 'Italia' : (mode==='estero' ? 'Estero' : 'Locale');
+  const modeTitle = (mode)=> mode==='italia' ? 'ITALIA' : (mode==='estero' ? 'ESTERO' : 'LOCALE');
   const vehicleLabel = (vehicle)=> vehicle==='auto' ? 'Auto personale' : (vehicle==='aereo' ? 'Aereo' : (vehicle==='mezzo_fornito' ? 'Mezzo fornito' : '-'));
+  const yesNo = v => v ? 'SI' : 'NO';
+  const isHolidayDay = v => !!(v.festivo || v.holiday || v.prefestivo);
+  const isTravelDay = v => !!(v.trasfertaNonLavorata ?? v.pern);
 
   if(!window.jspdf || !window.jspdf.jsPDF){
     alert('jsPDF non caricato. Controlla script in index.html.');
@@ -1263,7 +1267,6 @@ async function exportPdf(){
   const doc = new jsPDF({unit:'pt', format:'a4'});
   const pageW = doc.internal.pageSize.getWidth();
 
-  // Header WorkHours
   doc.setFillColor(30,42,56);
   doc.rect(0,0,pageW,70,'F');
   try{
@@ -1303,18 +1306,17 @@ async function exportPdf(){
   doc.setFontSize(12);
   doc.text(title, 20, startY);
 
-  // Tabella giornate reali
   const rows = days.map(({data:v, calc})=>{
     const base = [
       v.id.slice(-2),
       modeLabel(calc.mode),
-      v.in1||'-', v.out1||'-', v.in2||'-', v.out2||'-',
+      yesNo(isHolidayDay(v)),
       (calc.ordH||0).toFixed(2),
       (calc.strH||0).toFixed(2),
       (calc.travelH||0).toFixed(2),
       vehicleLabel(calc.vehicle),
       String(Math.round(calc.km||0)),
-      euro(calc.total||0),
+      yesNo(isTravelDay(v)),
       v.note?String(v.note):''
     ];
     if(clientIndex < 0) base.splice(1, 0, getClientName(v.clientIndex));
@@ -1323,11 +1325,11 @@ async function exportPdf(){
 
   if(typeof doc.autoTable === 'function'){
     const headDays = (clientIndex < 0)
-      ? [['Giorno','Cliente','Tipo','In1','Out1','In2','Out2','Ord','Str','Viaggio','Mezzo','KM','Totale','Note']]
-      : [['Giorno','Tipo','In1','Out1','In2','Out2','Ord','Str','Viaggio','Mezzo','KM','Totale','Note']];
+      ? [['Giorno','Cliente','Tipo','Fest./Pref.','Ore ord.','Ore str.','Ore viaggio','Mezzo','KM','Trasf. non lav.','Note']]
+      : [['Giorno','Tipo','Fest./Pref.','Ore ord.','Ore str.','Ore viaggio','Mezzo','KM','Trasf. non lav.','Note']];
     doc.autoTable({
       startY: startY + 10,
-      styles:{valign:'middle',fontSize:8,cellPadding:3,overflow:'linebreak'},
+      styles:{valign:'middle',fontSize:7,cellPadding:3,overflow:'linebreak'},
       headStyles:{fillColor:[30,42,56],textColor:255,fontStyle:'bold'},
       head: headDays,
       body: rows.length ? rows : [[clientIndex<0?'Nessun rapportino nel periodo':'Nessun rapportino nel periodo']],
@@ -1340,78 +1342,90 @@ async function exportPdf(){
     rows.forEach(r => { doc.text(r.join(' | '), 20, yPos); yPos+=14; if(yPos>800){ doc.addPage(); yPos=40; } });
   }
 
-  // Riepiloghi reali basati su calculateDayTotals
-  if(clientIndex < 0){
-    const groups = {};
-    days.forEach(({data:v, calc})=>{
-      const noIdx = getNoClientIndex();
-      const idx0 = (v.clientIndex==null ? -2 : v.clientIndex);
-      const idx = (idx0===noIdx || idx0<0) ? -2 : idx0;
-      if(!groups[idx]) groups[idx] = {ord:0,str:0,travel:0,km:0,total:0,days:0};
-      groups[idx].ord += calc.ordH||0;
-      groups[idx].str += calc.strH||0;
-      groups[idx].travel += calc.travelH||0;
-      groups[idx].km += calc.km||0;
-      groups[idx].total += calc.total||0;
-      groups[idx].days += 1;
-    });
-    const rowsCli=[];
-    let grand=0, totalOrd=0, totalStr=0, totalTravel=0, totalKm=0;
-    Object.keys(groups).sort((a,b)=>Number(a)-Number(b)).forEach(k=>{
-      const idx=Number(k), g=groups[idx];
-      const name = (idx>=0 ? (state.clients?.[idx]?.ragione || ('Cliente '+(idx+1))) : 'Senza cliente');
-      grand += g.total; totalOrd+=g.ord; totalStr+=g.str; totalTravel+=g.travel; totalKm+=g.km;
-      rowsCli.push([name, String(g.days), g.ord.toFixed(2), g.str.toFixed(2), g.travel.toFixed(2), String(Math.round(g.km)), euro(g.total)]);
-    });
-    const ySum = (doc.lastAutoTable && doc.lastAutoTable.finalY ? doc.lastAutoTable.finalY : startY+220) + 18;
+  const emptyMode = () => ({
+    ordQty:0, ordAmt:0,
+    strQty:0, strAmt:0,
+    travelQty:0, travelAmt:0,
+    kmQty:0, kmAmt:0,
+    travelDayQty:0, travelDayAmt:0,
+    holidayQty:0, holidayAmt:0,
+    total:0
+  });
+  const summary = { locale:emptyMode(), italia:emptyMode(), estero:emptyMode() };
+
+  days.forEach(({data:v, calc})=>{
+    const mode = calc.mode || 'locale';
+    const bucket = summary[mode] || summary.locale;
+    const holiday = isHolidayDay(v);
+
+    if(holiday){
+      bucket.holidayQty += (calc.totalH || 0);
+      bucket.holidayAmt += (calc.ordAmount || 0) + (calc.strAmount || 0);
+    }else{
+      bucket.ordQty += (calc.ordH || 0);
+      bucket.ordAmt += (calc.ordAmount || 0);
+      bucket.strQty += (calc.strH || 0);
+      bucket.strAmt += (calc.strAmount || 0);
+    }
+
+    bucket.travelQty += (calc.travelH || 0);
+    bucket.travelAmt += (calc.travelAmount || 0);
+    bucket.kmQty += (calc.km || 0);
+    bucket.kmAmt += (calc.kmAmount || 0);
+    if(isTravelDay(v) || (calc.travelDayAmount||0)>0){
+      bucket.travelDayQty += 1;
+      bucket.travelDayAmt += (calc.travelDayAmount || 0);
+    }
+    bucket.total += (calc.total || 0);
+  });
+
+  const yStartSummary = (doc.lastAutoTable && doc.lastAutoTable.finalY ? doc.lastAutoTable.finalY : startY+220) + 18;
+  const rowsSum = [];
+  const addModeRows = (mode)=>{
+    const b = summary[mode];
+    if(!b || Math.abs(b.total) < 0.005) return;
+    rowsSum.push([{content: modeTitle(mode), colSpan: 3, styles:{fillColor:[232,237,245],textColor:[30,42,56],fontStyle:'bold'}}]);
+
+    rowsSum.push(['Ore ordinarie', b.ordQty.toFixed(2), euro(b.ordAmt)]);
+    rowsSum.push(['Ore straordinarie', b.strQty.toFixed(2), euro(b.strAmt)]);
+
+    if(mode !== 'locale') rowsSum.push(['Ore viaggio', b.travelQty.toFixed(2), euro(b.travelAmt)]);
+
+    rowsSum.push(['KM', String(Math.round(b.kmQty)), euro(b.kmAmt)]);
+
+    if(mode !== 'locale') rowsSum.push(['Trasferta non lavorata', String(Math.round(b.travelDayQty)), euro(b.travelDayAmt)]);
+
+    rowsSum.push(['Festivo / Prefestivo', b.holidayQty.toFixed(2), euro(b.holidayAmt)]);
+    rowsSum.push([{content:'Totale ' + modeTitle(mode), colSpan:2, styles:{fontStyle:'bold',halign:'right'}}, {content:euro(b.total), styles:{fontStyle:'bold',halign:'right'}}]);
+  };
+
+  addModeRows('locale');
+  addModeRows('italia');
+  addModeRows('estero');
+
+  const subtotal = summary.locale.total + summary.italia.total + summary.estero.total;
+  const bollo = subtotal >= 77.47 ? 2.00 : 0;
+  rowsSum.push([{content:'Subtotale', colSpan:2, styles:{fontStyle:'bold',halign:'right'}}, {content:euro(subtotal), styles:{fontStyle:'bold',halign:'right'}}]);
+  rowsSum.push([{content:'Bollo 2€', colSpan:2, styles:{halign:'right'}}, {content:euro(bollo), styles:{halign:'right'}}]);
+  rowsSum.push([{content:'TOTALE FINALE', colSpan:2, styles:{fillColor:[30,42,56],textColor:255,fontStyle:'bold',halign:'right'}}, {content:euro(subtotal+bollo), styles:{fillColor:[30,42,56],textColor:255,fontStyle:'bold',halign:'right'}}]);
+
+  if(typeof doc.autoTable === 'function'){
     doc.autoTable({
-      startY:ySum,
-      styles:{valign:'middle',fontSize:10,cellPadding:4},
+      startY:yStartSummary,
+      styles:{valign:'middle',fontSize:9,cellPadding:4},
       headStyles:{fillColor:[30,42,56],textColor:255,fontStyle:'bold'},
-      head:[['Cliente','Giorni','Ord(h)','Str(h)','Viaggio(h)','KM','Totale']],
-      body:rowsCli,
-      theme:'grid',
-      margin:{left:18,right:18}
-    });
-    doc.setFontSize(12);
-    const finalY = doc.lastAutoTable?.finalY || ySum;
-    doc.text(`Ore: ${(totalOrd+totalStr).toFixed(2)}h · Viaggio: ${totalTravel.toFixed(2)}h · KM: ${Math.round(totalKm)} · Totale: ${euro(grand)}`, pageW-18, finalY+24, {align:'right'});
-  }else{
-    let totOrd=0, totStr=0, totTravel=0, totKm=0, totWork=0, totTravelAmount=0, totKmAmount=0, totTravelDay=0, totGrand=0;
-    days.forEach(({calc})=>{
-      totOrd += calc.ordH||0;
-      totStr += calc.strH||0;
-      totTravel += calc.travelH||0;
-      totKm += calc.km||0;
-      totWork += (calc.ordAmount||0) + (calc.strAmount||0);
-      totTravelAmount += calc.travelAmount||0;
-      totKmAmount += calc.kmAmount||0;
-      totTravelDay += calc.travelDayAmount||0;
-      totGrand += calc.total||0;
-    });
-    const items = [
-      ['Ore ordinarie', totOrd.toFixed(2), '', euro(days.reduce((s,x)=>s+(x.calc.ordAmount||0),0))],
-      ['Ore straordinarie', totStr.toFixed(2), '', euro(days.reduce((s,x)=>s+(x.calc.strAmount||0),0))],
-      ['Ore viaggio', totTravel.toFixed(2), '', euro(totTravelAmount)],
-      ['KM', String(Math.round(totKm)), '', euro(totKmAmount)],
-      ['Trasferta non lavorata', '', '', euro(totTravelDay)]
-    ].filter(r=> parseFloat(String(r[1]||'0'))>0 || parseFloat(String(r[3]||'0').replace(/[^0-9,.-]/g,'').replace(',','.'))>0 );
-    const sogliaBollo = 77.47;
-    const bollo = (totGrand >= sogliaBollo) ? 2.00 : 0;
-    if(bollo > 0) items.push(['Imposta di bollo','1','2,00',euro(2)]);
-    const ySum = (doc.lastAutoTable && doc.lastAutoTable.finalY ? doc.lastAutoTable.finalY : startY+220) + 18;
-    doc.autoTable({
-      startY:ySum,
-      styles:{valign:'middle',fontSize:10,cellPadding:4},
-      headStyles:{fillColor:[30,42,56],textColor:255,fontStyle:'bold'},
-      head:[['Descrizione','Q.tà','Prezzo','Importo']],
-      body:items,
+      head:[['Descrizione','Q.tà','Importo']],
+      body:rowsSum.length ? rowsSum : [['Nessun dato', '0', euro(0)]],
       theme:'grid',
       margin:{left:18,right:18},
-      columnStyles:{0:{cellWidth:'auto'},1:{cellWidth:60,halign:'right'},2:{cellWidth:60,halign:'right'},3:{cellWidth:90,halign:'right'}}
+      columnStyles:{0:{cellWidth:'auto'},1:{cellWidth:80,halign:'right'},2:{cellWidth:110,halign:'right'}}
     });
-    doc.setFontSize(12);
-    doc.text('Totale: ' + euro(totGrand + bollo), pageW-18, doc.lastAutoTable.finalY+24, {align:'right'});
+  }else{
+    let yPos = yStartSummary;
+    rowsSum.forEach(r=>{
+      if(Array.isArray(r)) doc.text(r.map(c => typeof c === 'string' ? c : (c.content||'')).join(' | '), 20, yPos);
+      yPos += 14;
+    });
   }
 
   const suffix = clientIndex<0 ? '' : '_' + (state.clients[clientIndex]?.ragione||'cliente').replace(/\s+/g,'_');
