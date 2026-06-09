@@ -232,18 +232,17 @@ function updatePdfPreview(arr, summary){
 
   const tbody=document.getElementById('pdfClientPreviewRows');
   if(!tbody) return;
-  const t=state.tariffs || {ord:0,str:0,km:0};
   const groups={};
   (arr||[]).forEach(v=>{
-    const compiled=(v.totalH||0)>0 || (v.ordH||0)>0 || (v.strH||0)>0 || (v.km||0)>0 || v.note;
+    const calc = calculateDayTotals(v);
+    const compiled=(calc.totalH||0)>0 || (calc.travelH||0)>0 || (calc.km||0)>0 || (calc.total||0)>0 || !!v.note;
     if(!compiled) return;
     const idx=(v.clientIndex==null ? -1 : v.clientIndex);
     const name=idx>=0 ? (state.clients?.[idx]?.ragione || ('Cliente '+(idx+1))) : 'Senza cliente';
     if(!groups[name]) groups[name]={ore:0,km:0,stimato:0};
-    groups[name].ore += (v.totalH||v.ordH||0) + (v.strH||0);
-    groups[name].km += v.km||0;
-    const ct = idx>=0 && state.clients?.[idx]?.tariffs ? state.clients[idx].tariffs : t;
-    groups[name].stimato += (v.ordH||0)*(ct.ord||0) + (v.strH||0)*(ct.str||0) + (v.km||0)*(ct.km||0);
+    groups[name].ore += (calc.totalH||0) + (calc.travelH||0);
+    groups[name].km += calc.km||0;
+    groups[name].stimato += calc.total||0;
   });
   const rows=Object.entries(groups).sort((a,b)=>b[1].stimato-a[1].stimato);
   if(!rows.length){
@@ -1062,8 +1061,9 @@ async function loadMonth(yyyyMM){
     }
     arr.forEach(v=>{
       const dNum = Number(v.id.slice(-2));
-      const isCompiled = (v.totalH||0)>0 || (v.ordH||0)>0 || (v.strH||0)>0 || (v.km||0)>0;
-      const isDraft = !isCompiled && !!(v.note || v.trasf || v.pern);
+      const calc = calculateDayTotals(v);
+      const isCompiled = (calc.totalH||0)>0 || (calc.travelH||0)>0 || (calc.km||0)>0 || (calc.total||0)>0;
+      const isDraft = !isCompiled && !!(v.note || v.trasf || v.pern || v.trasfertaNonLavorata);
       const status = isCompiled ? 'compiled' : (isDraft ? 'draft' : 'empty');
       const cell=document.createElement('button');
       cell.type='button';
@@ -1081,15 +1081,16 @@ function showDayDetail(v){
   const calc = calculateDayTotals(v);
   const detailHtml = `<div class="detail-date"><strong>${fmtIT(v.id)}</strong><span>${cli}</span></div>
     <div class="detail-grid">
-      <div><span>Ordinarie</span><strong>${(v.ordH||0).toFixed(2)}h</strong></div>
-      <div><span>Straordinarie</span><strong>${(v.strH||0).toFixed(2)}h</strong></div>
+      <div><span>Ordinarie</span><strong>${(calc.ordH||0).toFixed(2)}h</strong></div>
+      <div><span>Straordinarie</span><strong>${(calc.strH||0).toFixed(2)}h</strong></div>
+      <div><span>Viaggio</span><strong>${(calc.travelH||0).toFixed(2)}h</strong></div>
       <div><span>KM fatturabili</span><strong>${(calc.km||0).toFixed(0)}</strong></div>
       <div><span>Totale stimato</span><strong>${euro(calc.total)}</strong></div>
     </div>
     <div class="detail-lines">
       <p><b>Orari:</b> ${v.in1||'-'} → ${v.out1||'-'} · ${v.in2||'-'} → ${v.out2||'-'}</p>
       <p><b>Viaggio:</b> ${(calc.travelH||0).toFixed(2)}h · Mezzo: ${v.travelVehicle || '—'} · ${euro(calc.travelAmount)}</p>
-      <p><b>Extra:</b> Trasferta ${v.trasf?'Sì':'No'} · Trasferta non lavorata ${(v.trasfertaNonLavorata ?? v.pern)?'Sì':'No'}</p>
+      <p><b>Tipo:</b> ${calc.mode==='locale'?'Locale':(calc.mode==='italia'?'Trasferta Italia':'Trasferta Estero')} · <b>Trasferta non lavorata:</b> ${(v.trasfertaNonLavorata ?? v.pern)?'Sì':'No'}</p>
       <p><b>Note:</b> ${v.note||'—'}</p>
     </div>
     <button type="button" class="btn primary" id="btnEditCalendarDay">Modifica</button>`;
