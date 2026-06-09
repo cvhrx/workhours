@@ -1222,48 +1222,38 @@ async function exportPdf(){
   const map = {};
   for(let d=1; d<=last; d++){
     const id = `${yyyyMM}-${pad2(d)}`;
-    map[id] = { id, in1:'', out1:'', in2:'', out2:'', ordH:0, strH:0, totalH:0, km:0, note:'', trasf:false, pern:false, clientIndex:-1 };
+    map[id] = { id, in1:'', out1:'', in2:'', out2:'', ordH:0, strH:0, totalH:0, km:0, note:'', workMode:'locale', travelVehicle:'', travelH:0, trasfertaNonLavorata:false, clientIndex:-1 };
   }
   try{
     const snap = await db.collection('users').doc(state.user.uid).collection('days')
       .where(firebase.firestore.FieldPath.documentId(), '>=', `${yyyyMM}-01`)
       .where(firebase.firestore.FieldPath.documentId(), '<=', `${yyyyMM}-${pad2(last)}`)
       .get();
-    snap.forEach(d=>{ map[d.id] = Object.assign(map[d.id], d.data()); });
+    snap.forEach(d=>{ map[d.id] = Object.assign(map[d.id], d.data(), {id:d.id}); });
   }catch(e){
     console.error('PDF LOAD ERROR', e);
     alert('Errore lettura dati per PDF: ' + (e.message||e.code));
+    return;
   }
 
-  const days = Object.values(map)
+  const rawDays = Object.values(map)
     .filter(v => clientIndex < 0 || v.clientIndex === clientIndex)
     .sort((a,b)=>a.id.localeCompare(b.id));
 
-  // Ora: Data = solo giorno, colonne Ord e Str separate
+  const enriched = rawDays.map(v=>({ data:v, calc:calculateDayTotals(v) }));
+  const days = enriched.filter(x=>{
+    const v=x.data, c=x.calc;
+    return (c.totalH||0)>0 || (c.travelH||0)>0 || (c.km||0)>0 || (c.total||0)>0 || !!v.note || !!v.trasfertaNonLavorata || !!v.pern;
+  });
+
   const getClientName = (idx)=>{
     const noIdx = getNoClientIndex();
     if(idx==null || idx<0 || idx===noIdx) return 'Senza cliente';
     const c = state.clients?.[idx];
     return (c?.ragione) || ('Cliente ' + (idx+1));
   };
-
-  const rows = days.map(v => {
-    const base = [
-      v.id.slice(-2),
-      v.in1||'-', v.out1||'-', v.in2||'-', v.out2||'-',
-      (v.ordH||0).toFixed(2), (v.strH||0).toFixed(2),
-      v.trasf?'SI':'', v.pern?'SI':'', String(v.km||0),
-      v.note?String(v.note):''
-    ];
-    // Se export 'Tutti', aggiungo colonna Cliente subito dopo il giorno
-    if(clientIndex < 0){
-      base.splice(1, 0, getClientName(v.clientIndex));
-    }
-    return base;
-  });
-const t = (clientIndex>=0 && state.clients?.[clientIndex]?.tariffs) ? state.clients[clientIndex].tariffs : (state.tariffs||{ord:0,str:0,strFest:0,km:0,trasf:0,pern:0});
-  let totOrd=0, totStr=0, totStrFest=0, totKm=0, nTrasf=0, nPern=0;
-  days.forEach(v=>{ totOrd+=v.ordH||0; totStr+=v.strH||0; totStrFest+=v.strFestH||0; totKm+=v.km||0; if(v.trasf) nTrasf++; if(v.pern) nPern++; });
+  const modeLabel = (mode)=> mode==='italia' ? 'Trasferta Italia' : (mode==='estero' ? 'Trasferta Estero' : 'Locale');
+  const vehicleLabel = (vehicle)=> vehicle==='auto' ? 'Auto personale' : (vehicle==='aereo' ? 'Aereo' : (vehicle==='mezzo_fornito' ? 'Mezzo fornito' : '-'));
 
   if(!window.jspdf || !window.jspdf.jsPDF){
     alert('jsPDF non caricato. Controlla script in index.html.');
@@ -1273,27 +1263,19 @@ const t = (clientIndex>=0 && state.clients?.[clientIndex]?.tariffs) ? state.clie
   const doc = new jsPDF({unit:'pt', format:'a4'});
   const pageW = doc.internal.pageSize.getWidth();
 
-  // header con banda e logo
+  // Header WorkHours
   doc.setFillColor(30,42,56);
   doc.rect(0,0,pageW,70,'F');
   try{
     const logo = await imgToDataURL('assets/logo-workhours-dark.png');
     const imgWidth = 160;
-const imgProps = doc.getImageProperties(logo);
-const imgHeight = (imgProps.height * imgWidth) / imgProps.width;
+    const imgProps = doc.getImageProperties(logo);
+    const imgHeight = (imgProps.height * imgWidth) / imgProps.width;
+    doc.addImage(logo,'PNG',(pageW-imgWidth)/2,8,imgWidth,imgHeight);
+  }catch(_){ }
 
-doc.addImage(
-  logo,
-  'PNG',
-  (pageW - imgWidth) / 2,
-  8,
-  imgWidth,
-  imgHeight
-);
-  }catch(_){}
   const co = state.company || {};
   const cli = (typeof clientIndex === 'number' && clientIndex >= 0) ? (state.clients?.[clientIndex] || null) : null;
-
   const leftLines = [
     co.ragione||'',
     co.piva ? `P.IVA: ${co.piva}` : '',
@@ -1302,7 +1284,6 @@ doc.addImage(
     co.telefono ? `Tel: ${co.telefono}` : '',
     co.email||''
   ].filter(Boolean);
-
   const rightLines = cli ? [
     cli.ragione||'',
     cli.piva ? `P.IVA: ${cli.piva}` : '',
@@ -1313,170 +1294,127 @@ doc.addImage(
 
   doc.setFontSize(10);
   let yHeader = 86;
-
-  if(leftLines.length){
-    doc.text(leftLines, 18, yHeader, {align:'left'});
-  }
-  if(rightLines.length){
-    doc.text(rightLines, pageW - 18, yHeader, {align:'right'});
-  }
-
-  // spazio usato dal blocco header (prendo il max fra SX e DX)
+  if(leftLines.length) doc.text(leftLines, 18, yHeader, {align:'left'});
+  if(rightLines.length) doc.text(rightLines, pageW-18, yHeader, {align:'right'});
   yHeader += 12 * Math.max(leftLines.length, rightLines.length);
-  // titolo e spostamento più in basso
-  const title = clientIndex<0 ? `Rapportini ${yyyyMM}` : `Rapportini ${yyyyMM} — ${(state.clients[clientIndex]?.ragione)||''}`;
-  doc.setFontSize(12);
+
+  const title = clientIndex<0 ? `Riepilogo mensile ${yyyyMM}` : `Rapportini ${yyyyMM} — ${(state.clients[clientIndex]?.ragione)||''}`;
   const startY = Math.max(130, yHeader + 20);
+  doc.setFontSize(12);
   doc.text(title, 20, startY);
 
-  // tabella giornaliera
-  if(typeof doc.autoTable === 'function'){
-    
-  const headDays = (clientIndex < 0)
-    ? [['Giorno','Cliente','In1','Out1','In2','Out2','Ord','Str','Trsf.','Trsf. non lav.','KM','Note']]
-    : [['Giorno','In1','Out1','In2','Out2','Ord','Str','Trsf.','Trsf. non lav.','KM','Note']];
+  // Tabella giornate reali
+  const rows = days.map(({data:v, calc})=>{
+    const base = [
+      v.id.slice(-2),
+      modeLabel(calc.mode),
+      v.in1||'-', v.out1||'-', v.in2||'-', v.out2||'-',
+      (calc.ordH||0).toFixed(2),
+      (calc.strH||0).toFixed(2),
+      (calc.travelH||0).toFixed(2),
+      vehicleLabel(calc.vehicle),
+      String(Math.round(calc.km||0)),
+      euro(calc.total||0),
+      v.note?String(v.note):''
+    ];
+    if(clientIndex < 0) base.splice(1, 0, getClientName(v.clientIndex));
+    return base;
+  });
 
-  const colDays = (clientIndex < 0)
-    ? {
-        0:{cellWidth:28, halign:'center'},
-        1:{cellWidth:90},
-        2:{cellWidth:30}, 3:{cellWidth:30}, 4:{cellWidth:30}, 5:{cellWidth:30},
-        6:{cellWidth:34, halign:'right'}, 7:{cellWidth:34, halign:'right'},
-        8:{cellWidth:36}, 9:{cellWidth:36}, 10:{cellWidth:30, halign:'right'},
-        11:{cellWidth:'auto'}
-      }
-    : {
-        0:{cellWidth:34, halign:'center'},
-        1:{cellWidth:32}, 2:{cellWidth:32}, 3:{cellWidth:32}, 4:{cellWidth:32},
-        5:{cellWidth:36, halign:'right'}, 6:{cellWidth:36, halign:'right'},
-        7:{cellWidth:40}, 8:{cellWidth:44}, 9:{cellWidth:32, halign:'right'},
-        10:{cellWidth:'auto'}
-      };
-doc.autoTable({
+  if(typeof doc.autoTable === 'function'){
+    const headDays = (clientIndex < 0)
+      ? [['Giorno','Cliente','Tipo','In1','Out1','In2','Out2','Ord','Str','Viaggio','Mezzo','KM','Totale','Note']]
+      : [['Giorno','Tipo','In1','Out1','In2','Out2','Ord','Str','Viaggio','Mezzo','KM','Totale','Note']];
+    doc.autoTable({
       startY: startY + 10,
-      styles:{valign:'middle',fontSize:9,cellPadding:4,overflow:'linebreak'},
+      styles:{valign:'middle',fontSize:8,cellPadding:3,overflow:'linebreak'},
       headStyles:{fillColor:[30,42,56],textColor:255,fontStyle:'bold'},
       head: headDays,
-      body:rows,
+      body: rows.length ? rows : [[clientIndex<0?'Nessun rapportino nel periodo':'Nessun rapportino nel periodo']],
       theme:'grid',
-      margin:{left:18,right:18},
-      columnStyles: colDays
+      margin:{left:18,right:18}
     });
   }else{
-    doc.setFontSize(11);
+    doc.setFontSize(10);
     let yPos = startY + 26;
-    rows.forEach(r => { doc.text(r.join(' | '), 20, yPos); yPos+=16; if(yPos>800){ doc.addPage(); yPos=40; } });
+    rows.forEach(r => { doc.text(r.join(' | '), 20, yPos); yPos+=14; if(yPos>800){ doc.addPage(); yPos=40; } });
   }
 
-  // riepilogo finale
-  const getTar = (idx)=>{
-    const noIdx = getNoClientIndex();
-    if(idx>=0 && state.clients?.[idx]?.tariffs) return state.clients[idx].tariffs;
-    if(idx===-2 || idx===noIdx) return state.tariffsNoClient || state.tariffs || {ord:0,str:0,strFest:0,km:0,trasf:0,pern:0};
-    return state.tariffs || {ord:0,str:0,strFest:0,km:0,trasf:0,pern:0};
-  };
-
+  // Riepiloghi reali basati su calculateDayTotals
   if(clientIndex < 0){
-    // Riepilogo PER CLIENTE con tariffari diversi
     const groups = {};
-    days.forEach(v=>{
+    days.forEach(({data:v, calc})=>{
       const noIdx = getNoClientIndex();
       const idx0 = (v.clientIndex==null ? -2 : v.clientIndex);
       const idx = (idx0===noIdx || idx0<0) ? -2 : idx0;
-      if(!groups[idx]) groups[idx] = {ord:0,str:0,km:0,trasf:0,pern:0};
-      groups[idx].ord += v.ordH||0;
-      groups[idx].str += v.strH||0;
-      groups[idx].km  += v.km||0;
-      if(v.trasf) groups[idx].trasf += 1;
-      if(v.pern)  groups[idx].pern  += 1;
+      if(!groups[idx]) groups[idx] = {ord:0,str:0,travel:0,km:0,total:0,days:0};
+      groups[idx].ord += calc.ordH||0;
+      groups[idx].str += calc.strH||0;
+      groups[idx].travel += calc.travelH||0;
+      groups[idx].km += calc.km||0;
+      groups[idx].total += calc.total||0;
+      groups[idx].days += 1;
     });
-
-    const rowsCli = [];
-    let grand = 0;
-
+    const rowsCli=[];
+    let grand=0, totalOrd=0, totalStr=0, totalTravel=0, totalKm=0;
     Object.keys(groups).sort((a,b)=>Number(a)-Number(b)).forEach(k=>{
-      const idx = Number(k);
-      const g = groups[idx];
-      const t = getTar(idx);
-
-      const imp =
-        g.ord * (t.ord||0) +
-        g.str * (t.str||0) +
-        g.km  * (t.km||0) +
-        g.trasf * (t.trasf||0) +
-        g.pern  * (t.pern||0);
-
-      grand += imp;
-
+      const idx=Number(k), g=groups[idx];
       const name = (idx>=0 ? (state.clients?.[idx]?.ragione || ('Cliente '+(idx+1))) : 'Senza cliente');
-      rowsCli.push([
-        name,
-        g.ord.toFixed(2),
-        g.str.toFixed(2),
-        String(Math.round(g.km)),
-        String(g.trasf),
-        String(g.pern),
-        imp.toFixed(2)
-      ]);
+      grand += g.total; totalOrd+=g.ord; totalStr+=g.str; totalTravel+=g.travel; totalKm+=g.km;
+      rowsCli.push([name, String(g.days), g.ord.toFixed(2), g.str.toFixed(2), g.travel.toFixed(2), String(Math.round(g.km)), euro(g.total)]);
     });
-
     const ySum = (doc.lastAutoTable && doc.lastAutoTable.finalY ? doc.lastAutoTable.finalY : startY+220) + 18;
     doc.autoTable({
-      startY: ySum,
+      startY:ySum,
       styles:{valign:'middle',fontSize:10,cellPadding:4},
       headStyles:{fillColor:[30,42,56],textColor:255,fontStyle:'bold'},
-      head:[['Cliente','Ord(h)','Str(h)','KM','Trsf','Pern','Subtot €']],
-      body: rowsCli,
+      head:[['Cliente','Giorni','Ord(h)','Str(h)','Viaggio(h)','KM','Totale']],
+      body:rowsCli,
       theme:'grid',
-      margin:{left:18,right:18},
-      columnStyles:{
-        0:{cellWidth:'auto'},
-        1:{cellWidth:60,halign:'right'},
-        2:{cellWidth:60,halign:'right'},
-        3:{cellWidth:46,halign:'right'},
-        4:{cellWidth:40,halign:'center'},
-        5:{cellWidth:40,halign:'center'},
-        6:{cellWidth:80,halign:'right'}
-      }
+      margin:{left:18,right:18}
     });
-
     doc.setFontSize(12);
-    doc.text(`Totale generale: € ${grand.toFixed(2)}`, pageW-18, doc.lastAutoTable.finalY+24, {align:'right'});
-
-  } else {
-    // Riepilogo singolo cliente (come prima)
-    const t = getTar(clientIndex);
+    const finalY = doc.lastAutoTable?.finalY || ySum;
+    doc.text(`Ore: ${(totalOrd+totalStr).toFixed(2)}h · Viaggio: ${totalTravel.toFixed(2)}h · KM: ${Math.round(totalKm)} · Totale: ${euro(grand)}`, pageW-18, finalY+24, {align:'right'});
+  }else{
+    let totOrd=0, totStr=0, totTravel=0, totKm=0, totWork=0, totTravelAmount=0, totKmAmount=0, totTravelDay=0, totGrand=0;
+    days.forEach(({calc})=>{
+      totOrd += calc.ordH||0;
+      totStr += calc.strH||0;
+      totTravel += calc.travelH||0;
+      totKm += calc.km||0;
+      totWork += (calc.ordAmount||0) + (calc.strAmount||0);
+      totTravelAmount += calc.travelAmount||0;
+      totKmAmount += calc.kmAmount||0;
+      totTravelDay += calc.travelDayAmount||0;
+      totGrand += calc.total||0;
+    });
     const items = [
-      ['Ore ordinarie', totOrd.toFixed(2), (t.ord||0).toFixed(2), (totOrd*(t.ord||0)).toFixed(2)],
-      ['Ore straordinarie', totStr.toFixed(2), (t.str||0).toFixed(2), (totStr*(t.str||0)).toFixed(2)],
-      ['KM', String(Math.round(totKm)), (t.km||0).toFixed(2), (totKm*(t.km||0)).toFixed(2)],
-      ['Trasferte', String(nTrasf), (t.trasf||0).toFixed(2), (nTrasf*(t.trasf||0)).toFixed(2)],
-      ['Trasferte non lavorate', String(nPern), (t.pern||0).toFixed(2), (nPern*(t.pern||0)).toFixed(2)]
-    ];
-    const totBase = items.reduce((s, r)=> s + parseFloat(r[3]), 0);
+      ['Ore ordinarie', totOrd.toFixed(2), '', euro(days.reduce((s,x)=>s+(x.calc.ordAmount||0),0))],
+      ['Ore straordinarie', totStr.toFixed(2), '', euro(days.reduce((s,x)=>s+(x.calc.strAmount||0),0))],
+      ['Ore viaggio', totTravel.toFixed(2), '', euro(totTravelAmount)],
+      ['KM', String(Math.round(totKm)), '', euro(totKmAmount)],
+      ['Trasferta non lavorata', '', '', euro(totTravelDay)]
+    ].filter(r=> parseFloat(String(r[1]||'0'))>0 || parseFloat(String(r[3]||'0').replace(/[^0-9,.-]/g,'').replace(',','.'))>0 );
     const sogliaBollo = 77.47;
-    const bollo = (totBase >= sogliaBollo) ? 2.00 : 0;
-    if(bollo > 0){
-      items.push(['Imposta di bollo', '1', '2.00', '2.00']);
-    }
-
+    const bollo = (totGrand >= sogliaBollo) ? 2.00 : 0;
+    if(bollo > 0) items.push(['Imposta di bollo','1','2,00',euro(2)]);
     const ySum = (doc.lastAutoTable && doc.lastAutoTable.finalY ? doc.lastAutoTable.finalY : startY+220) + 18;
     doc.autoTable({
-      startY: ySum,
+      startY:ySum,
       styles:{valign:'middle',fontSize:10,cellPadding:4},
       headStyles:{fillColor:[30,42,56],textColor:255,fontStyle:'bold'},
       head:[['Descrizione','Q.tà','Prezzo','Importo']],
-      body: items,
+      body:items,
       theme:'grid',
       margin:{left:18,right:18},
-      columnStyles:{0:{cellWidth:'auto'},1:{cellWidth:60,halign:'right'},2:{cellWidth:60,halign:'right'},3:{cellWidth:80,halign:'right'}}
+      columnStyles:{0:{cellWidth:'auto'},1:{cellWidth:60,halign:'right'},2:{cellWidth:60,halign:'right'},3:{cellWidth:90,halign:'right'}}
     });
-    const tot = totBase + bollo;
     doc.setFontSize(12);
-    doc.text('Totale: € ' + tot.toFixed(2), pageW-18, doc.lastAutoTable.finalY+24, {align:'right'});
+    doc.text('Totale: ' + euro(totGrand + bollo), pageW-18, doc.lastAutoTable.finalY+24, {align:'right'});
   }
 
   const suffix = clientIndex<0 ? '' : '_' + (state.clients[clientIndex]?.ragione||'cliente').replace(/\s+/g,'_');
   doc.save(`rapportini_${yyyyMM}${suffix}.pdf`);
-
 }
+
