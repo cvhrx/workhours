@@ -83,6 +83,7 @@ document.addEventListener('DOMContentLoaded', ()=>{
   $('#btnSaveDay').onclick = saveDay;
   $('#btnExportPdf').onclick = exportPdf;
   setupDayEstimateListeners();
+  setupFinanceControls();
   const tabList = document.getElementById('tabList');
   if(tabList) tabList.onclick = ()=> switchView('list');
   const tabCal = document.getElementById('tabCal');
@@ -686,6 +687,8 @@ async function initApp(){
 
   await loadDay(dp.value);
   await loadMonth(dp.value.slice(0,7));
+  initFinanceDefaults();
+  await loadFinanceMonth();
 }
 
 async function loadClientsAndTariffs(){
@@ -1111,6 +1114,159 @@ function showDayDetail(v){
   }
   document.getElementById('dayDetail').innerHTML = detailHtml;
   document.getElementById('dayDlg').showModal();
+}
+
+
+const FINANCE_CATEGORIES = {
+  income: ['Stipendio','Fattura','Rimborso','Investimenti','Altro'],
+  expense: ['Carburante','Pranzo','Cena','Hotel','Attrezzatura','Auto','Casa','Investimenti','Altro']
+};
+
+function getFinanceMonth(){
+  const fm = document.getElementById('financeMonth');
+  const dp = document.getElementById('dayPicker');
+  return (fm && fm.value) || (dp && dp.value ? dp.value.slice(0,7) : new Date().toISOString().slice(0,7));
+}
+
+function setupFinanceControls(){
+  const type = document.getElementById('financeType');
+  const fm = document.getElementById('financeMonth');
+  const save = document.getElementById('btnSaveFinanceMovement');
+  if(type) type.addEventListener('change', renderFinanceCategories);
+  if(fm) fm.addEventListener('change', loadFinanceMonth);
+  if(save) save.addEventListener('click', saveFinanceMovement);
+}
+
+function initFinanceDefaults(){
+  const today = new Date().toISOString().slice(0,10);
+  const date = document.getElementById('financeDate');
+  const fm = document.getElementById('financeMonth');
+  const dp = document.getElementById('dayPicker');
+  if(fm && !fm.value) fm.value = (dp && dp.value ? dp.value.slice(0,7) : today.slice(0,7));
+  if(date && !date.value) date.value = today;
+  renderFinanceCategories();
+}
+
+function renderFinanceCategories(){
+  const type = document.getElementById('financeType')?.value || 'expense';
+  const sel = document.getElementById('financeCategory');
+  if(!sel) return;
+  const old = sel.value;
+  sel.innerHTML = (FINANCE_CATEGORIES[type] || FINANCE_CATEGORIES.expense).map(c=>`<option value="${c}">${c}</option>`).join('');
+  if([...sel.options].some(o=>o.value===old)) sel.value = old;
+}
+
+function parseMoneyInput(v){
+  const cleaned = String(v ?? '').replace(/€/g,'').replace(/\s/g,'').replace(/\./g,'').replace(',', '.');
+  const n = parseFloat(cleaned);
+  return Number.isFinite(n) ? n : 0;
+}
+
+function getFinancePayload(){
+  const type = document.getElementById('financeType')?.value || 'expense';
+  const date = document.getElementById('financeDate')?.value || new Date().toISOString().slice(0,10);
+  const category = document.getElementById('financeCategory')?.value || 'Altro';
+  const amount = parseMoneyInput(document.getElementById('financeAmount')?.value || '0');
+  const note = document.getElementById('financeNote')?.value || '';
+  return { type, date, category, amount: Math.abs(amount), note };
+}
+
+async function saveFinanceMovement(){
+  try{
+    const data = getFinancePayload();
+    if(!data.date){ alert('Inserisci una data'); return; }
+    if(!data.amount || data.amount <= 0){ alert('Inserisci un importo maggiore di zero'); return; }
+    await db.collection('users').doc(state.user.uid).collection('finance').add({
+      ...data,
+      createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+      updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+    });
+    document.getElementById('financeAmount').value = '';
+    document.getElementById('financeNote').value = '';
+    const fm = document.getElementById('financeMonth');
+    if(fm) fm.value = data.date.slice(0,7);
+    await loadFinanceMonth();
+  }catch(e){
+    console.error('SAVE FINANCE ERROR', e);
+    alert('Errore salvataggio movimento: ' + (e.message || e.code));
+  }
+}
+
+async function loadFinanceMonth(){
+  if(!state.user) return;
+  initFinanceDefaults();
+  const ym = getFinanceMonth();
+  const [yy,mm] = ym.split('-').map(Number);
+  const last = new Date(yy, mm, 0).getDate();
+  const start = `${ym}-01`;
+  const end = `${ym}-${pad2(last)}`;
+  let movements = [];
+  try{
+    const snap = await db.collection('users').doc(state.user.uid).collection('finance')
+      .where('date','>=',start)
+      .where('date','<=',end)
+      .get();
+    movements = snap.docs.map(d=>({id:d.id, ...d.data()})).sort((a,b)=>(b.date||'').localeCompare(a.date||''));
+  }catch(e){
+    console.error('LOAD FINANCE ERROR', e);
+    // fallback: no alert if collection empty or index issue; show empty state
+    movements = [];
+  }
+  renderFinance(movements);
+}
+
+function renderFinance(movements){
+  const income = movements.filter(m=>m.type==='income').reduce((s,m)=>s+safeNum(m.amount,0),0);
+  const expense = movements.filter(m=>m.type!=='income').reduce((s,m)=>s+safeNum(m.amount,0),0);
+  const balance = income - expense;
+  setText('financeIncomeTotal', euro(income));
+  setText('financeExpenseTotal', euro(expense));
+  setText('financeBalanceTotal', euro(balance));
+  renderFinanceList(movements);
+  renderFinanceBars(movements);
+}
+
+function renderFinanceList(movements){
+  const box = document.getElementById('financeMovementList');
+  if(!box) return;
+  if(!movements.length){
+    box.innerHTML = '<div class="movement-empty">Nessun movimento nel mese selezionato.</div>';
+    return;
+  }
+  box.innerHTML = movements.map(m=>{
+    const type = m.type === 'income' ? 'income' : 'expense';
+    const sign = type === 'income' ? '+' : '-';
+    const labelDate = m.date ? fmtIT(m.date) : '--/--';
+    const note = m.note ? ` · ${escapeHtml(m.note)}` : '';
+    return `<div class="movement-item ${type}">
+      <div><strong>${escapeHtml(m.category || 'Altro')}</strong><span>${labelDate}${note}</span></div>
+      <b>${sign} ${euro(m.amount || 0)}</b>
+    </div>`;
+  }).join('');
+}
+
+function renderFinanceBars(movements){
+  const box = document.getElementById('financeBars');
+  if(!box) return;
+  const groups = {};
+  movements.filter(m=>m.type!=='income').forEach(m=>{
+    const cat = m.category || 'Altro';
+    groups[cat] = (groups[cat] || 0) + safeNum(m.amount,0);
+  });
+  const rows = Object.entries(groups).sort((a,b)=>b[1]-a[1]);
+  if(!rows.length){
+    box.innerHTML = '<div class="movement-empty">Nessuna uscita disponibile.</div>';
+    return;
+  }
+  const max = Math.max(...rows.map(r=>r[1]), 1);
+  box.innerHTML = rows.map(([cat,val])=>{
+    const pct = Math.max(4, Math.round(val / max * 100));
+    return `<div class="bar-row"><span>${escapeHtml(cat)}</span><div class="bar-track"><i style="width:${pct}%"></i></div><b>${euro(val)}</b></div>`;
+  }).join('');
+}
+
+function escapeHtml(str){
+  return String(str ?? '').replace(/[&<>'"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c]));
 }
 
 async function saveTariffs(){
