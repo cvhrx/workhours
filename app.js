@@ -242,8 +242,7 @@ function updatePdfPreview(arr, summary){
     const calc = calculateDayTotals(v);
     const compiled=(calc.totalH||0)>0 || (calc.travelH||0)>0 || (calc.km||0)>0 || (calc.total||0)>0 || !!v.note;
     if(!compiled) return;
-    const idx=(v.clientIndex==null ? -1 : v.clientIndex);
-    const name=idx>=0 ? (state.clients?.[idx]?.ragione || ('Cliente '+(idx+1))) : 'Senza cliente';
+    const name=getClientNameForDay(v);
     if(!groups[name]) groups[name]={ore:0,km:0,stimato:0};
     groups[name].ore += (calc.totalH||0) + (calc.travelH||0);
     groups[name].km += calc.km||0;
@@ -374,7 +373,7 @@ function renderTarClientSelect(){
   if(!sel) return;
   const cur = sel.value ?? '-1';
   const opts = ['<option value="-1">Globali (default)</option>','<option value="-2">Senza cliente</option>']
-    .concat((state.clients||[]).map((c,i)=>({c,i})).filter(x=>!isEmptyClient(x.c))
+    .concat((state.clients||[]).map((c,i)=>({c,i})).filter(x=>!isEmptyClient(x.c) && !isArchivedClient(x.c))
       .map(x=>`<option value="${x.i}">${x.c.ragione || ('Cliente '+(x.i+1))}</option>`));
   sel.innerHTML = opts.join('');
   // mantieni selezione se possibile
@@ -525,7 +524,7 @@ function calculateDayTotals(day){
   const d = day || {};
   const mode = d.workMode || (d.trasf ? 'italia' : 'locale');
   const vehicle = mode === 'locale' ? '' : (d.travelVehicle || '');
-  const tariffs = getClientTariffs(d.clientIndex ?? -1);
+  const tariffs = getClientTariffsForDay(d);
   const profile = getTariffProfile(tariffs, mode);
 
   // Regola ufficiale WorkHours: lo straordinario si calcola solo sulle ore lavoro timbrate.
@@ -608,7 +607,9 @@ function getPayload(){
   const total = (seg1+seg2);
   const ord = Math.min(8, total);
   const str = Math.max(0, total-8);
-  const clientIndex = Math.max(-1, (document.getElementById('clientSelect').selectedIndex||0) - 1);
+  const clientSel = document.getElementById('clientSelect');
+  const clientIndex = getClientIndexFromValue(clientSel ? clientSel.value : '-1');
+  const clientObj = clientIndex >= 0 ? state.clients?.[clientIndex] : null;
   const base = {
     in1, out1, in2, out2,
     ordH: Number(ord.toFixed(2)),
@@ -624,7 +625,10 @@ function getPayload(){
     festivo: !!document.getElementById('chipFestivo')?.classList.contains('active'),
     prefestivo: !!document.getElementById('chipFestivo')?.classList.contains('active'),
     note: document.getElementById('note').value||'',
-    clientIndex
+    clientIndex,
+    clientId: clientObj?.id || '',
+    clientName: clientObj?.ragione || '',
+    clientTariffs: clientObj?.tariffs ? cloneObj(clientObj.tariffs) : null
   };
   const calc = calculateDayTotals(base);
   return {
@@ -721,6 +725,70 @@ function getNoClientIndex(){
   return (state.clients||[]).findIndex(isEmptyClient);
 }
 
+function isArchivedClient(c){
+  return !!(c && (c.deleted || c.archived));
+}
+
+function getClientIndexFromValue(value){
+  const v = String(value ?? '-1');
+  if(v === '-1' || v === '') return -1;
+  const byId = (state.clients||[]).findIndex(c => String(c.id||'') === v);
+  if(byId >= 0) return byId;
+  const n = parseInt(v, 10);
+  return Number.isFinite(n) ? n : -1;
+}
+
+function getClientIndexForDay(day){
+  const d = day || {};
+  if(d.clientId){
+    const byId = (state.clients||[]).findIndex(c => String(c.id||'') === String(d.clientId));
+    if(byId >= 0) return byId;
+  }
+  const idx = parseInt(d.clientIndex, 10);
+  return Number.isFinite(idx) ? idx : -1;
+}
+
+function getClientForDay(day){
+  const idx = getClientIndexForDay(day);
+  return idx >= 0 ? (state.clients||[])[idx] : null;
+}
+
+function getClientNameForDay(day){
+  const c = getClientForDay(day);
+  if(c && c.ragione) return c.ragione;
+  if(day && day.clientName) return day.clientName;
+  const idx = getClientIndexForDay(day);
+  if(idx >= 0) return 'Cliente ' + (idx + 1);
+  return 'Senza cliente';
+}
+
+function setDayClientSelection(day){
+  const sel = document.getElementById('clientSelect');
+  if(!sel) return;
+  const id = day?.clientId || '';
+  if(id && [...sel.options].some(o => String(o.value) === String(id))){
+    sel.value = id;
+    return;
+  }
+  const idx = getClientIndexForDay(day);
+  if(idx >= 0){
+    const c = state.clients?.[idx];
+    const value = c?.id || String(idx);
+    if([...sel.options].some(o => String(o.value) === String(value))){
+      sel.value = value;
+      return;
+    }
+  }
+  sel.value = '-1';
+}
+
+function getClientTariffsForDay(day){
+  const idx = getClientIndexForDay(day);
+  if(idx >= 0 && state.clients?.[idx]?.tariffs) return state.clients[idx].tariffs;
+  if(day && day.clientTariffs) return day.clientTariffs;
+  return getClientTariffs(idx);
+}
+
 
 function clientInitials(c, fallback){
   const name = (c && (c.ragione || c.email || c.piva)) || fallback || 'WH';
@@ -742,15 +810,15 @@ function renderClients(){
   const selSet  = document.getElementById('cliSelect');    // usato in Clienti (usa ID Firestore)
   const rowsBox = document.getElementById('clientDirectoryRows');
 
-  const real = (state.clients||[]).map((c,i)=>({c,i})).filter(x=>!isEmptyClient(x.c));
+  const real = (state.clients||[]).map((c,i)=>({c,i})).filter(x=>!isEmptyClient(x.c) && !isArchivedClient(x.c));
 
   const optsDay = real
-    .map(x=>'<option value="'+x.i+'">'+(x.c.ragione||('Cliente '+(x.i+1)))+'</option>').join('');
+    .map(x=>'<option value="'+(x.c.id||x.i)+'">'+(x.c.ragione||('Cliente '+(x.i+1)))+'</option>').join('');
 
   const optsSet = real
     .map(x=>'<option value="'+(x.c.id||x.i)+'">'+(x.c.ragione||('Cliente '+(x.i+1)))+'</option>').join('');
 
-  if(selDay){ selDay.innerHTML = '<option>—</option>' + optsDay; }
+  if(selDay){ selDay.innerHTML = '<option value="-1">—</option>' + optsDay; }
 
   if(selSet){
     const oldValue = selSet.value;
@@ -906,12 +974,13 @@ async function delClient(){
 
   if(!confirm(`Eliminare cliente: ${c.ragione || 'Cliente'}?`)) return;
 
-  // delete from Firestore by id (stable)
+  // Non cancelliamo fisicamente il documento: lo archiviamo.
+  // Così le giornate già salvate con clientId continuano a trovare nome e tariffe.
+  c.deleted = true;
+  c.archivedAt = new Date().toISOString();
   if(c.id){
-    await db.collection('users').doc(state.user.uid).collection('clients').doc(c.id).delete();
+    await db.collection('users').doc(state.user.uid).collection('clients').doc(c.id).set({deleted:true, archivedAt:c.archivedAt}, {merge:true});
   }
-  // update local state
-  state.clients.splice(i,1);
   renderClients();
   clearClientForm();
   const sel2 = document.getElementById('cliSelect');
@@ -956,7 +1025,7 @@ async function duplicateYesterday(){
   const festDup = document.getElementById('chipFestivo');
   if(festDup) festDup.classList.toggle('active', !!(v.festivo || v.prefestivo || v.holiday));
   applyTravelFields(v);
-  document.getElementById('clientSelect').selectedIndex = (v.clientIndex??-1)+1;
+  setDayClientSelection(v);
   updateDayEstimate();
   alert('Dati di ieri copiati. Controlla e salva la giornata.');
 }
@@ -988,7 +1057,7 @@ async function loadDay(d){
     document.getElementById('chipTrasf').classList.toggle('active', !!v.trasf);
     document.getElementById('chipPern').classList.toggle('active', !!(v.trasfertaNonLavorata ?? v.pern));
     applyTravelFields(v);
-    document.getElementById('clientSelect').selectedIndex = (v.clientIndex??-1)+1;
+    setDayClientSelection(v);
     updateDayEstimate();
   }else{
     // reset form when day is empty
@@ -1003,7 +1072,7 @@ async function loadDay(d){
     const fest = document.getElementById('chipFestivo');
     if(fest) fest.classList.remove('active');
     applyTravelFields({workMode:'locale', travelVehicle:'', travelH:0});
-    document.getElementById('clientSelect').selectedIndex = 0;
+    setDayClientSelection({clientIndex:-1, clientId:''});
     updateDayEstimate();
   }
 }
@@ -1016,7 +1085,7 @@ async function loadMonth(yyyyMM){
   const daysMap = {};
   for(let d=1; d<=daysInMonth; d++){
     const id = `${y}-${pad2(m)}-${pad2(d)}`;
-    daysMap[id] = { id, in1:'', out1:'', in2:'', out2:'', ordH:0, strH:0, totalH:0, km:0, note:'', trasf:false, pern:false, clientIndex:-1 };
+    daysMap[id] = { id, in1:'', out1:'', in2:'', out2:'', ordH:0, strH:0, totalH:0, km:0, note:'', trasf:false, pern:false, clientIndex:-1, clientId:'', clientName:'', clientTariffs:null };
   }
   try{
     const snap = await db.collection('users').doc(state.user.uid).collection('days')
@@ -1033,7 +1102,7 @@ async function loadMonth(yyyyMM){
 
   if(list){
     arr.forEach(v=>{
-      const cli = (state.clients||[])[v.clientIndex]?.ragione || '—';
+      const cli = getClientNameForDay(v) || '—';
       const row = document.createElement('div');
       row.className='list-item';
       row.innerHTML = `<div><strong>${fmtIT(v.id)}</strong> · ${cli}</div>
@@ -1084,7 +1153,7 @@ async function loadMonth(yyyyMM){
 }
 
 function showDayDetail(v){
-  const cli = (state.clients||[])[v.clientIndex]?.ragione || '—';
+  const cli = getClientNameForDay(v) || '—';
   const calc = calculateDayTotals(v);
   const detailHtml = `<div class="detail-date"><strong>${fmtIT(v.id)}</strong><span>${cli}</span></div>
     <div class="detail-grid">
@@ -1364,7 +1433,7 @@ async function choosePdfClientIndex(){
             <label style="font-size:13px;opacity:.9">Seleziona cliente</label>
             <select id="__pdfClientSel" style="padding:10px;border-radius:10px;border:1px solid rgba(255,255,255,.15);background:rgba(0,0,0,.15);color:inherit">
               <option value="-1">Tutti i clienti</option><option value="-2">Senza cliente</option>
-              ${clients.map((c,i)=>({c,i})).filter(x=>!isEmptyClient(x.c)).map(x=>`<option value="${x.i}">${x.c.ragione || ('Cliente '+(x.i+1))}</option>`).join('')}
+              ${clients.map((c,i)=>({c,i})).filter(x=>!isEmptyClient(x.c) && !isArchivedClient(x.c)).map(x=>`<option value="${x.i}">${x.c.ragione || ('Cliente '+(x.i+1))}</option>`).join('')}
             </select>
           </div>
           <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:14px">
@@ -1409,7 +1478,7 @@ async function exportPdf(){
   const map = {};
   for(let d=1; d<=last; d++){
     const id = `${yyyyMM}-${pad2(d)}`;
-    map[id] = { id, in1:'', out1:'', in2:'', out2:'', ordH:0, strH:0, totalH:0, km:0, note:'', workMode:'locale', travelVehicle:'', travelH:0, trasfertaNonLavorata:false, clientIndex:-1 };
+    map[id] = { id, in1:'', out1:'', in2:'', out2:'', ordH:0, strH:0, totalH:0, km:0, note:'', workMode:'locale', travelVehicle:'', travelH:0, trasfertaNonLavorata:false, clientIndex:-1, clientId:'', clientName:'', clientTariffs:null };
   }
   try{
     const snap = await db.collection('users').doc(state.user.uid).collection('days')
@@ -1424,7 +1493,7 @@ async function exportPdf(){
   }
 
   const rawDays = Object.values(map)
-    .filter(v => clientIndex < 0 || v.clientIndex === clientIndex)
+    .filter(v => clientIndex < 0 || getClientIndexForDay(v) === clientIndex)
     .sort((a,b)=>a.id.localeCompare(b.id));
 
   const enriched = rawDays.map(v=>({ data:v, calc:calculateDayTotals(v) }));
@@ -1433,7 +1502,9 @@ async function exportPdf(){
     return (c.totalH||0)>0 || (c.travelH||0)>0 || (c.km||0)>0 || (c.total||0)>0 || !!v.note || !!v.trasfertaNonLavorata || !!v.pern;
   });
 
-  const getClientName = (idx)=>{
+  const getClientName = (dayOrIdx)=>{
+    if(typeof dayOrIdx === 'object') return getClientNameForDay(dayOrIdx);
+    const idx = dayOrIdx;
     const noIdx = getNoClientIndex();
     if(idx==null || idx<0 || idx===noIdx) return 'Senza cliente';
     const c = state.clients?.[idx];
@@ -1506,7 +1577,7 @@ async function exportPdf(){
       yesNo(isTravelDay(v)),
       v.note?String(v.note):''
     ];
-    if(clientIndex < 0) base.splice(1, 0, getClientName(v.clientIndex));
+    if(clientIndex < 0) base.splice(1, 0, getClientName(v));
     return base;
   });
 
