@@ -118,6 +118,10 @@ function showMainPage(pageId){
     const dp=document.getElementById('dayPicker');
     if(dp && dp.value && typeof loadMonth==='function') loadMonth(dp.value.slice(0,7));
   }
+  if(pageId==='finanzePage'){
+    setupFinanceControls();
+    loadFinanceMonth();
+  }
 }
 
 function syncMobileDate(){
@@ -1118,8 +1122,19 @@ function showDayDetail(v){
 
 
 const FINANCE_CATEGORIES = {
-  income: ['Stipendio','Fattura','Rimborso','Investimenti','Altro'],
-  expense: ['Carburante','Pranzo','Cena','Hotel','Attrezzatura','Auto','Casa','Investimenti','Altro']
+  income: [
+    'Stipendio','Fattura cliente','Acconto cliente','Saldo fattura','Rimborso spese','Rimborso km',
+    'Vendita materiale','Consulenza','Prestazione occasionale','Bonus','Regalo','Interessi','Dividendi',
+    'Investimenti','Restituzione prestito','Contanti versati','Bonifico ricevuto','Altro'
+  ],
+  expense: [
+    'Carburante','Autostrada','Parcheggio','Bollo auto','Assicurazione auto','Manutenzione auto','Lavaggio auto',
+    'Pranzo','Cena','Colazione','Bar','Ristoranti','Spesa alimentare','Hotel','B&B','Affitto','Mutuo','Bollette',
+    'Luce','Gas','Acqua','Internet','Telefono','Abbonamenti','Software','Commercialista','Banca','Commissioni',
+    'Tasse','F24','INPS','INAIL','Assicurazioni','Attrezzatura','Utensili','Materiale elettrico','Ricambi',
+    'Magazzino','DPI','Abbigliamento lavoro','Vestiario','Svago','Palestra','Salute','Farmacia','Regali',
+    'Casa','Animali','Viaggi','Aereo','Treno','Taxi','Noleggio','Investimenti','Prelievo contanti','Altro'
+  ]
 };
 
 function getFinanceMonth(){
@@ -1132,10 +1147,23 @@ function setupFinanceControls(){
   const type = document.getElementById('financeType');
   const fm = document.getElementById('financeMonth');
   const save = document.getElementById('btnSaveFinanceMovement');
-  if(type) type.addEventListener('change', renderFinanceCategories);
-  if(fm) fm.addEventListener('change', loadFinanceMonth);
-  if(save) save.addEventListener('click', saveFinanceMovement);
+
+  if(type && !type.dataset.bound){
+    type.dataset.bound = '1';
+    type.addEventListener('change', renderFinanceCategories);
+  }
+  if(fm && !fm.dataset.bound){
+    fm.dataset.bound = '1';
+    fm.addEventListener('change', loadFinanceMonth);
+  }
+  if(save && !save.dataset.bound){
+    save.dataset.bound = '1';
+    save.addEventListener('click', saveFinanceMovement);
+  }
+
+  initFinanceDefaults();
 }
+
 
 function initFinanceDefaults(){
   const today = new Date().toISOString().slice(0,10);
@@ -1152,8 +1180,10 @@ function renderFinanceCategories(){
   const sel = document.getElementById('financeCategory');
   if(!sel) return;
   const old = sel.value;
-  sel.innerHTML = (FINANCE_CATEGORIES[type] || FINANCE_CATEGORIES.expense).map(c=>`<option value="${c}">${c}</option>`).join('');
+  const list = FINANCE_CATEGORIES[type] || FINANCE_CATEGORIES.expense;
+  sel.innerHTML = list.map(c=>`<option value="${escapeHtml(c)}">${escapeHtml(c)}</option>`).join('');
   if([...sel.options].some(o=>o.value===old)) sel.value = old;
+  else if(sel.options.length) sel.selectedIndex = 0;
 }
 
 function parseMoneyInput(v){
@@ -1173,6 +1203,7 @@ function getFinancePayload(){
 
 async function saveFinanceMovement(){
   try{
+    if(!state.user){ alert('Devi essere loggato'); return; }
     const data = getFinancePayload();
     if(!data.date){ alert('Inserisci una data'); return; }
     if(!data.amount || data.amount <= 0){ alert('Inserisci un importo maggiore di zero'); return; }
