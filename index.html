@@ -497,7 +497,7 @@
             <div class="setting-box"><h3>Dati azienda</h3><p class="muted">Gestione dati aziendali. Verrà collegata nello step successivo.</p></div>
             <div class="setting-box"><h3>Tariffe globali</h3><p class="muted">Le tariffe globali sono gestibili dalla pagina Clienti → Tariffe.</p></div>
             <div class="setting-box"><h3>Backup / Ripristino</h3><p class="muted">Area prevista per export e sicurezza dati.</p></div>
-            <div class="setting-box"><h3>Migrazione WorkHours v2</h3><p class="muted">Qui verrà inserito il pulsante Importa clienti e tariffe.</p></div>
+            <div class="setting-box migration-box"><h3>Migrazione WorkHours v2</h3><p class="muted">Copia clienti e giornate nelle nuove collection <code>clients_v2</code> e <code>days_v2</code>. I dati vecchi restano come backup.</p><div class="row gap"><button type="button" class="btn primary" id="btnMigrateV2">Migra a V2</button></div><pre id="migrationV2Status" class="migration-status">Pronto per la migrazione.</pre></div>
           </div>
         </section>
       </section>
@@ -512,7 +512,7 @@
 
 
   <script>
-    if('serviceWorker' in navigator){window.addEventListener('load',()=>navigator.serviceWorker.register('service-worker_v11je.js'));}
+    if('serviceWorker' in navigator){window.addEventListener('load',()=>navigator.serviceWorker.register('service-worker_v12a.js'));}
   </script>
   <script src="firebase.js"></script>
   <script src="app.js"></script>

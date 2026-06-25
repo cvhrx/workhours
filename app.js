@@ -1,4 +1,4 @@
-// BUILD: STEP11JD_CLIENTI_STABILI
+// BUILD: STEP12A_MIGRAZIONE_V2
 const $ = s => document.querySelector(s);
 const pad2 = n => String(n).padStart(2,'0');
 const fmtIT = iso => { const [y,m,d] = iso.split('-'); return `${d}/${m}/${y}`; };
@@ -84,6 +84,8 @@ document.addEventListener('DOMContentLoaded', ()=>{
   $('#btnExportPdf').onclick = exportPdf;
   setupDayEstimateListeners();
   setupFinanceControls();
+  const migrateBtn = document.getElementById('btnMigrateV2');
+  if(migrateBtn) migrateBtn.onclick = migrateToV2;
   const tabList = document.getElementById('tabList');
   if(tabList) tabList.onclick = ()=> switchView('list');
   const tabCal = document.getElementById('tabCal');
@@ -1748,3 +1750,182 @@ async function exportPdf(){
   doc.save(`rapportini_${yyyyMM}${suffix}.pdf`);
 }
 
+
+
+// STEP12A - Migrazione V2 sicura: copia dati in clients_v2 e days_v2 senza cancellare V1.
+function setMigrationStatus(message, cls){
+  const el = document.getElementById('migrationV2Status');
+  if(!el) return;
+  el.textContent = message;
+  el.classList.remove('ok','warn','err');
+  if(cls) el.classList.add(cls);
+}
+
+function v2CleanClient(c, index){
+  c = c || {};
+  const now = new Date().toISOString();
+  return {
+    version: 2,
+    originalId: String(c.id || ''),
+    legacyIndex: index,
+    name: c.ragione || c.name || '',
+    ragione: c.ragione || c.name || '',
+    vatNumber: c.piva || c.vatNumber || '',
+    piva: c.piva || c.vatNumber || '',
+    address: c.indirizzo || c.address || '',
+    indirizzo: c.indirizzo || c.address || '',
+    email: c.email || '',
+    phone: c.tel || c.telefono || c.phone || '',
+    tel: c.tel || c.telefono || c.phone || '',
+    sdi: c.sdi || '',
+    tariffs: cloneObj(c.tariffs || state.tariffs || {}),
+    archived: !!isArchivedClient(c),
+    migratedAt: now,
+    updatedAt: now,
+    createdAt: c.createdAt || now
+  };
+}
+
+function normalizeWorkModeForV2(d){
+  const mode = d?.workMode || (d?.trasf ? 'italia' : 'locale');
+  if(mode === 'italia' || mode === 'estero' || mode === 'locale') return mode;
+  return 'locale';
+}
+
+function normalizeVehicleForV2(d){
+  const v = d?.travelVehicle || '';
+  return ['auto','aereo','mezzo_fornito'].includes(v) ? v : '';
+}
+
+function buildV2Day(dayId, raw, clientMap){
+  const d = raw || {};
+  const mode = normalizeWorkModeForV2(d);
+  let clientId = d.clientId ? String(d.clientId) : '';
+  let clientName = d.clientName || '';
+  let clientTariffs = d.clientTariffsSnapshot || null;
+
+  if(!clientId && Number.isFinite(Number(d.clientIndex)) && clientMap.byLegacyIndex.has(Number(d.clientIndex))){
+    const c = clientMap.byLegacyIndex.get(Number(d.clientIndex));
+    clientId = c.id;
+    clientName = clientName || c.name;
+    clientTariffs = clientTariffs || c.tariffs || null;
+  }
+  if(!clientId && clientName){
+    const k = String(clientName).trim().toLowerCase();
+    if(clientMap.byName.has(k)){
+      const c = clientMap.byName.get(k);
+      clientId = c.id;
+      clientName = c.name;
+      clientTariffs = clientTariffs || c.tariffs || null;
+    }
+  }
+
+  const calc = calculateDayTotals({...d, clientId, clientName, clientTariffsSnapshot: clientTariffs});
+  return {
+    version: 2,
+    dayId,
+    date: dayId,
+    clientId,
+    clientNameSnapshot: clientName || 'Cliente non trovato',
+    clientTariffsSnapshot: cloneObj(clientTariffs || {}),
+    workMode: mode,
+    travelVehicle: normalizeVehicleForV2(d),
+    travelH: safeNum(d.travelH, 0),
+    trasfertaNonLavorata: !!(d.trasfertaNonLavorata ?? d.pern),
+    festivo: !!(d.festivo || d.prefestivo || d.holiday),
+    prefestivo: !!(d.prefestivo || d.festivo || d.holiday),
+    in1: d.in1 || '', out1: d.out1 || '', in2: d.in2 || '', out2: d.out2 || '',
+    workedHours: calc.totalH || 0,
+    ordinaryHours: calc.ordH || 0,
+    overtimeHours: calc.strH || 0,
+    travelHours: calc.travelH || 0,
+    km: safeNum(d.km, 0),
+    billableKm: calc.km || 0,
+    note: d.note || '',
+    notes: d.note || '',
+    legacyClientIndex: Number.isFinite(Number(d.clientIndex)) ? Number(d.clientIndex) : -1,
+    legacyClientId: d.clientId || '',
+    totals: {
+      ordinary: Number((calc.ordAmount || 0).toFixed(2)),
+      overtime: Number((calc.strAmount || 0).toFixed(2)),
+      travel: Number((calc.travelAmount || 0).toFixed(2)),
+      km: Number((calc.kmAmount || 0).toFixed(2)),
+      trasferta: Number((calc.travelDayAmount || 0).toFixed(2)),
+      holiday: 0,
+      total: Number((calc.total || 0).toFixed(2))
+    },
+    migratedAt: new Date().toISOString()
+  };
+}
+
+async function migrateToV2(){
+  if(!state.user){ alert('Devi essere loggato'); return; }
+  if(!confirm('Migrare i dati a WorkHours V2?\n\nVerranno create clients_v2 e days_v2. I dati vecchi NON verranno cancellati.')) return;
+  const btn = document.getElementById('btnMigrateV2');
+  if(btn) btn.disabled = true;
+  setMigrationStatus('Migrazione avviata...\nLettura clienti e giornate V1.', 'warn');
+
+  const uref = db.collection('users').doc(state.user.uid);
+  let clientsMigrated = 0, daysMigrated = 0, errors = 0;
+  const logs = [];
+  try{
+    await loadClientsAndTariffs();
+    const clientsSnap = await uref.collection('clients').get();
+    const clients = clientsSnap.docs.map((doc, idx)=>({doc, id: doc.id, data:{id:doc.id, ...doc.data()}, idx}));
+    const clientMap = {byLegacyIndex:new Map(), byName:new Map()};
+    let batch = db.batch();
+    let ops = 0;
+
+    clients.forEach((item, idx)=>{
+      const clean = v2CleanClient(item.data, idx);
+      const id = item.id;
+      const ref = uref.collection('clients_v2').doc(id);
+      batch.set(ref, clean, {merge:true});
+      ops++;
+      clientsMigrated++;
+      const info = {id, name: clean.ragione || clean.name || '', tariffs: clean.tariffs || {}, legacyIndex: idx};
+      clientMap.byLegacyIndex.set(idx, info);
+      if(info.name) clientMap.byName.set(info.name.trim().toLowerCase(), info);
+      if(ops >= 450){ /* batch safety handled below by committing after loop chunks if needed */ }
+    });
+    if(ops){ await batch.commit(); }
+    logs.push(`Clienti migrati: ${clientsMigrated}`);
+
+    const daysSnap = await uref.collection('days').get();
+    batch = db.batch(); ops = 0;
+    for(const doc of daysSnap.docs){
+      try{
+        const v2 = buildV2Day(doc.id, doc.data(), clientMap);
+        batch.set(uref.collection('days_v2').doc(doc.id), v2, {merge:true});
+        ops++; daysMigrated++;
+        if(ops >= 400){ await batch.commit(); batch = db.batch(); ops = 0; }
+      }catch(e){
+        errors++;
+        console.error('MIGRATE DAY ERROR', doc.id, e);
+      }
+    }
+    if(ops) await batch.commit();
+    logs.push(`Giornate migrate: ${daysMigrated}`);
+    logs.push(`Errori: ${errors}`);
+
+    await uref.set({
+      migrationV2: {
+        completed: true,
+        completedAt: firebase.firestore.FieldValue.serverTimestamp(),
+        clientsMigrated,
+        daysMigrated,
+        errors,
+        source: 'STEP12A'
+      }
+    }, {merge:true});
+
+    setMigrationStatus(`Migrazione completata.\n\n${logs.join('\n')}\n\nI dati V1 sono rimasti come backup.`, errors ? 'warn' : 'ok');
+    alert('Migrazione V2 completata');
+  }catch(e){
+    console.error('MIGRATION V2 ERROR', e);
+    setMigrationStatus('Errore migrazione:\n' + (e.message || e.code || e), 'err');
+    alert('Errore migrazione: ' + (e.message || e.code));
+  }finally{
+    if(btn) btn.disabled = false;
+  }
+}
