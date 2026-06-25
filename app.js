@@ -608,7 +608,9 @@ function getPayload(){
   const total = (seg1+seg2);
   const ord = Math.min(8, total);
   const str = Math.max(0, total-8);
-  const clientIndex = Math.max(-1, (document.getElementById('clientSelect').selectedIndex||0) - 1);
+  const clientSelectEl = document.getElementById('clientSelect');
+  const clientIndex = parseInt(clientSelectEl?.value ?? '-1', 10);
+  const safeClientIndex = Number.isFinite(clientIndex) ? clientIndex : -1;
   const base = {
     in1, out1, in2, out2,
     ordH: Number(ord.toFixed(2)),
@@ -624,7 +626,7 @@ function getPayload(){
     festivo: !!document.getElementById('chipFestivo')?.classList.contains('active'),
     prefestivo: !!document.getElementById('chipFestivo')?.classList.contains('active'),
     note: document.getElementById('note').value||'',
-    clientIndex
+    clientIndex: safeClientIndex
   };
   const calc = calculateDayTotals(base);
   return {
@@ -754,7 +756,7 @@ function renderClients(){
   const optsSet = real
     .map(x=>'<option value="'+(x.c.id||x.i)+'">'+(x.c.ragione||('Cliente '+(x.i+1)))+'</option>').join('');
 
-  if(selDay){ selDay.innerHTML = '<option>—</option>' + optsDay; }
+  if(selDay){ selDay.innerHTML = '<option value="-1">—</option>' + optsDay; }
 
   if(selSet){
     const oldValue = selSet.value;
@@ -946,6 +948,17 @@ function setTime(hSel,mSel,hhmm){
 }
 
 
+function setDayClientValue(clientIndex){
+  const sel = document.getElementById('clientSelect');
+  if(!sel) return;
+  const val = String(clientIndex ?? -1);
+  if([...sel.options].some(o => o.value === val)){
+    sel.value = val;
+  }else{
+    sel.value = '-1';
+  }
+}
+
 async function duplicateYesterday(){
   const dp = document.getElementById('dayPicker');
   if(!dp || !dp.value){ alert('Seleziona prima una data'); return; }
@@ -967,7 +980,7 @@ async function duplicateYesterday(){
   const festDup = document.getElementById('chipFestivo');
   if(festDup) festDup.classList.toggle('active', !!(v.festivo || v.prefestivo || v.holiday));
   applyTravelFields(v);
-  document.getElementById('clientSelect').selectedIndex = (v.clientIndex??-1)+1;
+  setDayClientValue(v.clientIndex);
   updateDayEstimate();
   alert('Dati di ieri copiati. Controlla e salva la giornata.');
 }
@@ -999,7 +1012,7 @@ async function loadDay(d){
     document.getElementById('chipTrasf').classList.toggle('active', !!v.trasf);
     document.getElementById('chipPern').classList.toggle('active', !!(v.trasfertaNonLavorata ?? v.pern));
     applyTravelFields(v);
-    document.getElementById('clientSelect').selectedIndex = (v.clientIndex??-1)+1;
+    setDayClientValue(v.clientIndex);
     updateDayEstimate();
   }else{
     // reset form when day is empty
