@@ -242,8 +242,9 @@ function updatePdfPreview(arr, summary){
     const calc = calculateDayTotals(v);
     const compiled=(calc.totalH||0)>0 || (calc.travelH||0)>0 || (calc.km||0)>0 || (calc.total||0)>0 || !!v.note;
     if(!compiled) return;
-    const idx=(v.clientIndex==null ? -1 : v.clientIndex);
-    const name=idx>=0 ? (state.clients?.[idx]?.ragione || ('Cliente '+(idx+1))) : 'Senza cliente';
+    if(!isDayForActiveClient(v)) return;
+    const r = getClientByDay(v);
+    const name = r.client ? getDayClientName(v) : 'Senza cliente';
     if(!groups[name]) groups[name]={ore:0,km:0,stimato:0};
     groups[name].ore += (calc.totalH||0) + (calc.travelH||0);
     groups[name].km += calc.km||0;
@@ -758,7 +759,8 @@ function isEmptyClient(c){
 }
 
 function isArchivedClient(c){
-  return !!(c && c.archived === true);
+  if(!c) return false;
+  return c.archived === true || c.deleted === true || c.eliminato === true || c.active === false || c.status === 'archived' || c.status === 'deleted';
 }
 
 function getClientIndexById(id){
