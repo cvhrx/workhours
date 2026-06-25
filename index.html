@@ -494,7 +494,25 @@
         <section class="card">
           <h2>Impostazioni</h2>
           <div class="settings-grid">
-            <div class="setting-box"><h3>Dati azienda</h3><p class="muted">Gestione dati aziendali. Verrà collegata nello step successivo.</p></div>
+            <div class="setting-box company-settings-box">
+              <h3>Dati azienda</h3>
+              <p class="muted">Dati letti da <code>users/{uid}/company</code>. Usati anche nell’intestazione PDF.</p>
+              <div class="company-form-grid">
+                <label class="field"><span>Ragione sociale</span><input id="coRagione" placeholder="Ragione sociale"></label>
+                <label class="field"><span>P.IVA</span><input id="coPiva" placeholder="Partita IVA"></label>
+                <label class="field"><span>Codice fiscale</span><input id="coCf" placeholder="Codice fiscale"></label>
+                <label class="field"><span>Telefono</span><input id="coTelefono" placeholder="Telefono"></label>
+                <label class="field wide"><span>Indirizzo</span><input id="coIndirizzo" placeholder="Indirizzo"></label>
+                <label class="field"><span>CAP</span><input id="coCap" placeholder="CAP"></label>
+                <label class="field"><span>Città</span><input id="coCitta" placeholder="Città"></label>
+                <label class="field"><span>Provincia</span><input id="coProvincia" placeholder="Provincia"></label>
+                <label class="field"><span>Email</span><input id="coEmail" placeholder="Email"></label>
+                <label class="field"><span>PEC</span><input id="coPec" placeholder="PEC"></label>
+                <label class="field"><span>Codice SDI</span><input id="coSdi" placeholder="Codice destinatario"></label>
+                <label class="field"><span>Sito web</span><input id="coWebsite" placeholder="Sito web"></label>
+              </div>
+              <div class="row right"><span id="companySaveStatus" class="muted small-status"></span><button type="button" class="btn primary" id="btnSaveCompany">Salva dati azienda</button></div>
+            </div>
             <div class="setting-box"><h3>Tariffe globali</h3><p class="muted">Le tariffe globali sono gestibili dalla pagina Clienti → Tariffe.</p></div>
             <div class="setting-box"><h3>Backup / Ripristino</h3><p class="muted">Area prevista per export e sicurezza dati.</p></div>
             <div class="setting-box migration-box"><h3>Migrazione WorkHours v2</h3><p class="muted">Copia clienti e giornate nelle nuove collection <code>clients_v2</code> e <code>days_v2</code>. I dati vecchi restano come backup.</p><div class="row gap"><button type="button" class="btn primary" id="btnMigrateV2">Migra a V2</button></div><pre id="migrationV2Status" class="migration-status">Pronto per la migrazione.</pre></div>
@@ -512,7 +530,7 @@
 
 
   <script>
-    if('serviceWorker' in navigator){window.addEventListener('load',()=>navigator.serviceWorker.register('service-worker_v12b.js'));}
+    if('serviceWorker' in navigator){window.addEventListener('load',()=>navigator.serviceWorker.register('service-worker_v12c.js'));}
   </script>
   <script src="firebase.js"></script>
   <script src="app.js"></script>

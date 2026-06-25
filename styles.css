@@ -1112,3 +1112,12 @@ body::before,.sidebar::before{
 
 /* STEP12A - Migrazione V2 */
 .migration-box code{background:rgba(15,23,42,.06);padding:2px 6px;border-radius:8px;font-size:.9em}.migration-status{margin-top:12px;padding:12px;border-radius:14px;background:#0f172a;color:#e5edf7;white-space:pre-wrap;max-height:220px;overflow:auto;font-size:12px;line-height:1.45}.migration-status.ok{background:#0f3f2e;color:#dcfce7}.migration-status.warn{background:#422006;color:#ffedd5}.migration-status.err{background:#450a0a;color:#fee2e2}
+
+/* STEP12C company settings */
+.company-settings-box{grid-column:1 / -1;}
+.company-form-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px;margin-top:16px;}
+.company-form-grid .field{margin-bottom:0;}
+.company-form-grid .wide{grid-column:span 3;}
+.small-status{font-weight:800;margin-right:auto;}
+@media(max-width:1100px){.company-form-grid{grid-template-columns:1fr 1fr}.company-form-grid .wide{grid-column:span 2}}
+@media(max-width:720px){.company-form-grid{grid-template-columns:1fr}.company-form-grid .wide{grid-column:auto}}
