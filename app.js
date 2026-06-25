@@ -1,4 +1,4 @@
-// BUILD: STEP12C_COMPANY_SETTINGS
+// BUILD: STEP12B_USA_V2
 const $ = s => document.querySelector(s);
 const pad2 = n => String(n).padStart(2,'0');
 const fmtIT = iso => { const [y,m,d] = iso.split('-'); return `${d}/${m}/${y}`; };
@@ -86,8 +86,6 @@ document.addEventListener('DOMContentLoaded', ()=>{
   setupFinanceControls();
   const migrateBtn = document.getElementById('btnMigrateV2');
   if(migrateBtn) migrateBtn.onclick = migrateToV2;
-  const saveCompanyBtn = document.getElementById('btnSaveCompany');
-  if(saveCompanyBtn) saveCompanyBtn.onclick = saveCompanySettings;
   const tabList = document.getElementById('tabList');
   if(tabList) tabList.onclick = ()=> switchView('list');
   const tabCal = document.getElementById('tabCal');
@@ -673,7 +671,6 @@ function getPayload(){
 async function initApp(){
   buildTimeSelectors();
   await loadClientsAndTariffs();
-  renderCompanySettings();
 
   const cliSel = document.getElementById('cliSelect');
   if(cliSel){
@@ -722,65 +719,6 @@ async function initApp(){
   await loadMonth(dp.value.slice(0,7));
   initFinanceDefaults();
   await loadFinanceMonth();
-}
-
-
-function getCompanyPayloadFromForm(){
-  return {
-    ragione: document.getElementById('coRagione')?.value?.trim() || '',
-    piva: document.getElementById('coPiva')?.value?.trim() || '',
-    cf: document.getElementById('coCf')?.value?.trim() || '',
-    indirizzo: document.getElementById('coIndirizzo')?.value?.trim() || '',
-    cap: document.getElementById('coCap')?.value?.trim() || '',
-    citta: document.getElementById('coCitta')?.value?.trim() || '',
-    provincia: document.getElementById('coProvincia')?.value?.trim() || '',
-    telefono: document.getElementById('coTelefono')?.value?.trim() || '',
-    email: document.getElementById('coEmail')?.value?.trim() || '',
-    pec: document.getElementById('coPec')?.value?.trim() || '',
-    sdi: document.getElementById('coSdi')?.value?.trim() || '',
-    website: document.getElementById('coWebsite')?.value?.trim() || '',
-    updatedAt: firebase.firestore.FieldValue.serverTimestamp()
-  };
-}
-
-function renderCompanySettings(){
-  const co = state.company || {};
-  const map = {
-    coRagione: co.ragione || co.companyName || '',
-    coPiva: co.piva || co.vat || '',
-    coCf: co.cf || co.taxCode || '',
-    coIndirizzo: co.indirizzo || co.address || '',
-    coCap: co.cap || co.zip || '',
-    coCitta: co.citta || co.city || '',
-    coProvincia: co.provincia || co.province || '',
-    coTelefono: co.telefono || co.phone || '',
-    coEmail: co.email || '',
-    coPec: co.pec || '',
-    coSdi: co.sdi || '',
-    coWebsite: co.website || ''
-  };
-  Object.entries(map).forEach(([id,val])=>{
-    const el = document.getElementById(id);
-    if(el) el.value = val;
-  });
-}
-
-async function saveCompanySettings(){
-  try{
-    const payload = getCompanyPayloadFromForm();
-    state.company = {...payload};
-    await db.collection('users').doc(state.user.uid).set({ company: payload }, { merge:true });
-    const st = document.getElementById('companySaveStatus');
-    if(st){
-      st.textContent = 'Dati azienda salvati.';
-      setTimeout(()=>{ if(st.textContent === 'Dati azienda salvati.') st.textContent=''; }, 2500);
-    } else {
-      alert('Dati azienda salvati');
-    }
-  }catch(e){
-    console.error('SAVE COMPANY ERROR', e);
-    alert(e.message || 'Errore salvataggio dati azienda');
-  }
 }
 
 async function loadClientsAndTariffs(){
