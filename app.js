@@ -242,8 +242,7 @@ function updatePdfPreview(arr, summary){
     const calc = calculateDayTotals(v);
     const compiled=(calc.totalH||0)>0 || (calc.travelH||0)>0 || (calc.km||0)>0 || (calc.total||0)>0 || !!v.note;
     if(!compiled) return;
-    const idx=(v.clientIndex==null ? -1 : v.clientIndex);
-    const name=idx>=0 ? (state.clients?.[idx]?.ragione || ('Cliente '+(idx+1))) : 'Senza cliente';
+    const name = getClientNameFromDay(v);
     if(!groups[name]) groups[name]={ore:0,km:0,stimato:0};
     groups[name].ore += (calc.totalH||0) + (calc.travelH||0);
     groups[name].km += calc.km||0;
@@ -455,10 +454,13 @@ function cloneObj(o){
   return JSON.parse(JSON.stringify(o || {}));
 }
 
-function getClientTariffs(idx){
+function getClientTariffs(ref){
+  const idx = resolveClientIndex(ref);
   const noIdx = getNoClientIndex();
   if(idx >= 0 && idx !== noIdx && state.clients?.[idx]?.tariffs) return state.clients[idx].tariffs;
   if((idx === -2 || idx === noIdx) && state.tariffsNoClient) return state.tariffsNoClient;
+  if(ref?.clientTariffs) return ref.clientTariffs;
+  if(ref?.clientSnapshot?.tariffs) return ref.clientSnapshot.tariffs;
   return state.tariffs || {ord:0,str:0,strFest:0,km:0,trasf:0,pern:0};
 }
 
@@ -525,7 +527,7 @@ function calculateDayTotals(day){
   const d = day || {};
   const mode = d.workMode || (d.trasf ? 'italia' : 'locale');
   const vehicle = mode === 'locale' ? '' : (d.travelVehicle || '');
-  const tariffs = getClientTariffs(d.clientIndex ?? -1);
+  const tariffs = getClientTariffs(d);
   const profile = getTariffProfile(tariffs, mode);
 
   // Regola ufficiale WorkHours: lo straordinario si calcola solo sulle ore lavoro timbrate.
@@ -609,8 +611,8 @@ function getPayload(){
   const ord = Math.min(8, total);
   const str = Math.max(0, total-8);
   const clientSelectEl = document.getElementById('clientSelect');
-  const clientIndex = parseInt(clientSelectEl?.value ?? '-1', 10);
-  const safeClientIndex = Number.isFinite(clientIndex) ? clientIndex : -1;
+  const safeClientIndex = selectedDayClientIndex();
+  const selectedClient = safeClientIndex >= 0 ? state.clients?.[safeClientIndex] : null;
   const base = {
     in1, out1, in2, out2,
     ordH: Number(ord.toFixed(2)),
@@ -626,7 +628,20 @@ function getPayload(){
     festivo: !!document.getElementById('chipFestivo')?.classList.contains('active'),
     prefestivo: !!document.getElementById('chipFestivo')?.classList.contains('active'),
     note: document.getElementById('note').value||'',
-    clientIndex: safeClientIndex
+    clientIndex: safeClientIndex,
+    clientId: selectedClient?.id || '',
+    clientName: selectedClient?.ragione || '',
+    clientSnapshot: selectedClient ? {
+      id: selectedClient.id || '',
+      ragione: selectedClient.ragione || '',
+      piva: selectedClient.piva || '',
+      email: selectedClient.email || '',
+      tel: selectedClient.tel || '',
+      indirizzo: selectedClient.indirizzo || '',
+      sdi: selectedClient.sdi || '',
+      tariffs: cloneObj(selectedClient.tariffs || {})
+    } : null,
+    clientTariffs: selectedClient?.tariffs ? cloneObj(selectedClient.tariffs) : null
   };
   const calc = calculateDayTotals(base);
   return {
@@ -658,8 +673,9 @@ async function initApp(){
     };
   }
   if((state.clients||[]).length>0){
-    if(cliSel) cliSel.value = '0';
-    fillClientForm(0);
+    const firstIdx = (state.clients||[]).findIndex(c=>!isEmptyClient(c) && !isArchivedClient(c));
+    if(cliSel && firstIdx >= 0) cliSel.value = clientOptionValue(firstIdx);
+    if(firstIdx >= 0) fillClientForm(firstIdx);
   } else {
     if(cliSel) cliSel.value = '-1';
     clearClientForm();
@@ -727,6 +743,55 @@ function getNoClientIndex(){
   return (state.clients||[]).findIndex(isEmptyClient);
 }
 
+function findClientIndexById(clientId){
+  if(!clientId) return -1;
+  return (state.clients||[]).findIndex(c=>String(c?.id||'') === String(clientId));
+}
+
+function findClientIndexByName(clientName){
+  if(!clientName) return -1;
+  const target = String(clientName||'').trim().toLowerCase();
+  if(!target) return -1;
+  return (state.clients||[]).findIndex(c=>String(c?.ragione||'').trim().toLowerCase() === target);
+}
+
+function resolveClientIndex(ref){
+  if(typeof ref === 'number') return ref;
+  if(!ref) return -1;
+  let i = findClientIndexById(ref.clientId);
+  if(i >= 0) return i;
+  i = findClientIndexByName(ref.clientName || ref.clientSnapshot?.ragione);
+  if(i >= 0) return i;
+  if(Number.isFinite(Number(ref.clientIndex))) return Number(ref.clientIndex);
+  return -1;
+}
+
+function getClientNameFromDay(day){
+  const i = resolveClientIndex(day);
+  if(i >= 0 && state.clients?.[i]?.ragione) return state.clients[i].ragione;
+  if(day?.clientName) return day.clientName;
+  if(day?.clientSnapshot?.ragione) return day.clientSnapshot.ragione;
+  const noIdx = getNoClientIndex();
+  if(i === noIdx || i < 0) return 'Senza cliente';
+  return 'Cliente storico non trovato';
+}
+
+function clientOptionValue(i){
+  const c = state.clients?.[i];
+  return c?.id ? String(c.id) : String(i);
+}
+
+function selectedDayClientIndex(){
+  const sel = document.getElementById('clientSelect');
+  if(!sel) return -1;
+  const val = sel.value;
+  if(val === '' || val === '-1') return -1;
+  const idxById = findClientIndexById(val);
+  if(idxById >= 0) return idxById;
+  const i = parseInt(val,10);
+  return Number.isFinite(i) ? i : -1;
+}
+
 
 function clientInitials(c, fallback){
   const name = (c && (c.ragione || c.email || c.piva)) || fallback || 'WH';
@@ -751,7 +816,7 @@ function renderClients(){
   const real = (state.clients||[]).map((c,i)=>({c,i})).filter(x=>!isEmptyClient(x.c) && !isArchivedClient(x.c));
 
   const optsDay = real
-    .map(x=>'<option value="'+x.i+'">'+(x.c.ragione||('Cliente '+(x.i+1)))+'</option>').join('');
+    .map(x=>'<option value="'+clientOptionValue(x.i)+'" data-client-index="'+x.i+'">'+(x.c.ragione||('Cliente '+(x.i+1)))+'</option>').join('');
 
   const optsSet = real
     .map(x=>'<option value="'+(x.c.id||x.i)+'">'+(x.c.ragione||('Cliente '+(x.i+1)))+'</option>').join('');
@@ -948,15 +1013,34 @@ function setTime(hSel,mSel,hhmm){
 }
 
 
-function setDayClientValue(clientIndex){
+function setDayClientValue(dayOrIndex){
   const sel = document.getElementById('clientSelect');
   if(!sel) return;
-  const val = String(clientIndex ?? -1);
-  if([...sel.options].some(o => o.value === val)){
-    sel.value = val;
+  let idx = -1;
+  if(typeof dayOrIndex === 'object' && dayOrIndex){
+    idx = resolveClientIndex(dayOrIndex);
   }else{
-    sel.value = '-1';
+    idx = Number(dayOrIndex ?? -1);
   }
+  if(idx >= 0){
+    const val = clientOptionValue(idx);
+    if([...sel.options].some(o => o.value === val)){
+      sel.value = val;
+      return;
+    }
+  }
+  // Fallback: se il giorno ha solo snapshot storico, aggiunge un'opzione temporanea non salvabile su rubrica.
+  if(typeof dayOrIndex === 'object' && dayOrIndex && (dayOrIndex.clientName || dayOrIndex.clientSnapshot?.ragione)){
+    const histName = dayOrIndex.clientName || dayOrIndex.clientSnapshot?.ragione;
+    const o = document.createElement('option');
+    o.value = dayOrIndex.clientId || '__historic__';
+    o.textContent = histName + ' (storico)';
+    o.dataset.clientIndex = '-1';
+    sel.appendChild(o);
+    sel.value = o.value;
+    return;
+  }
+  sel.value = '-1';
 }
 
 async function duplicateYesterday(){
@@ -980,7 +1064,7 @@ async function duplicateYesterday(){
   const festDup = document.getElementById('chipFestivo');
   if(festDup) festDup.classList.toggle('active', !!(v.festivo || v.prefestivo || v.holiday));
   applyTravelFields(v);
-  setDayClientValue(v.clientIndex);
+  setDayClientValue(v);
   updateDayEstimate();
   alert('Dati di ieri copiati. Controlla e salva la giornata.');
 }
@@ -1012,7 +1096,7 @@ async function loadDay(d){
     document.getElementById('chipTrasf').classList.toggle('active', !!v.trasf);
     document.getElementById('chipPern').classList.toggle('active', !!(v.trasfertaNonLavorata ?? v.pern));
     applyTravelFields(v);
-    setDayClientValue(v.clientIndex);
+    setDayClientValue(v);
     updateDayEstimate();
   }else{
     // reset form when day is empty
@@ -1057,7 +1141,7 @@ async function loadMonth(yyyyMM){
 
   if(list){
     arr.forEach(v=>{
-      const cli = (state.clients||[])[v.clientIndex]?.ragione || '—';
+      const cli = getClientNameFromDay(v) || '—';
       const row = document.createElement('div');
       row.className='list-item';
       row.innerHTML = `<div><strong>${fmtIT(v.id)}</strong> · ${cli}</div>
@@ -1108,7 +1192,7 @@ async function loadMonth(yyyyMM){
 }
 
 function showDayDetail(v){
-  const cli = (state.clients||[])[v.clientIndex]?.ragione || '—';
+  const cli = getClientNameFromDay(v) || '—';
   const calc = calculateDayTotals(v);
   const detailHtml = `<div class="detail-date"><strong>${fmtIT(v.id)}</strong><span>${cli}</span></div>
     <div class="detail-grid">
@@ -1448,7 +1532,7 @@ async function exportPdf(){
   }
 
   const rawDays = Object.values(map)
-    .filter(v => clientIndex < 0 || v.clientIndex === clientIndex)
+    .filter(v => clientIndex < 0 || resolveClientIndex(v) === clientIndex)
     .sort((a,b)=>a.id.localeCompare(b.id));
 
   const enriched = rawDays.map(v=>({ data:v, calc:calculateDayTotals(v) }));
@@ -1457,11 +1541,12 @@ async function exportPdf(){
     return (c.totalH||0)>0 || (c.travelH||0)>0 || (c.km||0)>0 || (c.total||0)>0 || !!v.note || !!v.trasfertaNonLavorata || !!v.pern;
   });
 
-  const getClientName = (idx)=>{
+  const getClientName = (dayOrIdx)=>{
+    if(typeof dayOrIdx === 'object') return getClientNameFromDay(dayOrIdx);
     const noIdx = getNoClientIndex();
-    if(idx==null || idx<0 || idx===noIdx) return 'Senza cliente';
-    const c = state.clients?.[idx];
-    return (c?.ragione) || ('Cliente ' + (idx+1));
+    if(dayOrIdx==null || dayOrIdx<0 || dayOrIdx===noIdx) return 'Senza cliente';
+    const c = state.clients?.[dayOrIdx];
+    return (c?.ragione) || ('Cliente ' + (dayOrIdx+1));
   };
   const modeLabel = (mode)=> mode==='italia' ? 'Italia' : (mode==='estero' ? 'Estero' : 'Locale');
   const modeTitle = (mode)=> mode==='italia' ? 'ITALIA' : (mode==='estero' ? 'ESTERO' : 'LOCALE');
@@ -1530,7 +1615,7 @@ async function exportPdf(){
       yesNo(isTravelDay(v)),
       v.note?String(v.note):''
     ];
-    if(clientIndex < 0) base.splice(1, 0, getClientName(v.clientIndex));
+    if(clientIndex < 0) base.splice(1, 0, getClientName(v));
     return base;
   });
 
