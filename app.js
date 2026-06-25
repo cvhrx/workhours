@@ -1,4 +1,4 @@
-// BUILD: STEP12A_MIGRAZIONE_V2
+// BUILD: STEP12B_USA_V2
 const $ = s => document.querySelector(s);
 const pad2 = n => String(n).padStart(2,'0');
 const fmtIT = iso => { const [y,m,d] = iso.split('-'); return `${d}/${m}/${y}`; };
@@ -733,7 +733,7 @@ async function loadClientsAndTariffs(){
     clientOrder = Array.isArray(data.clientOrder) ? data.clientOrder.map(String) : [];
     setTariffInputs(state.tariffs);
   }
-  const cs = await uref.collection('clients').get();
+  const cs = await uref.collection('clients_v2').get();
   let docs = cs.docs.map(d=>({id:d.id, ...d.data()}));
 
   // Mantiene un ordine clienti stabile. Questo protegge i vecchi rapportini basati su clientIndex.
@@ -950,7 +950,7 @@ async function saveClientUpsert(){
     return;
   }
 
-  const col = db.collection('users').doc(state.user.uid).collection('clients');
+  const col = db.collection('users').doc(state.user.uid).collection('clients_v2');
 
   // update existing
   if(i >= 0 && state.clients?.[i]){
@@ -1015,7 +1015,7 @@ async function delClient(){
   // Non cancellare fisicamente il cliente: i rapportini legacy usano clientIndex.
   // Rimuoverlo dalla collection sposterebbe gli indici e romperebbe lo storico.
   if(c.id){
-    await db.collection('users').doc(state.user.uid).collection('clients').doc(c.id).set(archiveData, {merge:true});
+    await db.collection('users').doc(state.user.uid).collection('clients_v2').doc(c.id).set(archiveData, {merge:true});
   }
   Object.assign(state.clients[i], archiveData);
 
@@ -1026,7 +1026,7 @@ async function delClient(){
   alert('Cliente archiviato. I rapportini già salvati restano collegati.');
 }
 async function saveClients(){
-  const col = db.collection('users').doc(state.user.uid).collection('clients');
+  const col = db.collection('users').doc(state.user.uid).collection('clients_v2');
   const snap = await col.get();
   const batch = db.batch();
   snap.forEach(d=>batch.delete(d.ref));
@@ -1068,7 +1068,7 @@ async function duplicateYesterday(){
   const cur = new Date(dp.value + 'T00:00:00');
   cur.setDate(cur.getDate() - 1);
   const prev = cur.toISOString().slice(0,10);
-  const ref = db.collection('users').doc(state.user.uid).collection('days').doc(prev);
+  const ref = db.collection('users').doc(state.user.uid).collection('days_v2').doc(prev);
   const snap = await ref.get();
   if(!snap.exists){ alert('Ieri non ha dati da duplicare'); return; }
   const v = snap.data();
@@ -1092,7 +1092,7 @@ async function saveDay(){
   const d = document.getElementById('dayPicker').value;
   const data = getPayload();
   try{
-    await db.collection('users').doc(state.user.uid).collection('days').doc(d).set(data, {merge:true});
+    await db.collection('users').doc(state.user.uid).collection('days_v2').doc(d).set(data, {merge:true});
     await loadMonth(d.slice(0,7));
     alert('Giornata salvata');
   }catch(e){
@@ -1102,7 +1102,7 @@ async function saveDay(){
 }
 
 async function loadDay(d){
-  const ref = db.collection('users').doc(state.user.uid).collection('days').doc(d);
+  const ref = db.collection('users').doc(state.user.uid).collection('days_v2').doc(d);
   const snap = await ref.get();
   if(snap.exists){
     const v = snap.data();
@@ -1146,7 +1146,7 @@ async function loadMonth(yyyyMM){
     daysMap[id] = { id, in1:'', out1:'', in2:'', out2:'', ordH:0, strH:0, totalH:0, km:0, note:'', trasf:false, pern:false, clientIndex:-1 };
   }
   try{
-    const snap = await db.collection('users').doc(state.user.uid).collection('days')
+    const snap = await db.collection('users').doc(state.user.uid).collection('days_v2')
       .where(firebase.firestore.FieldPath.documentId(), '>=', `${yyyyMM}-01`)
       .where(firebase.firestore.FieldPath.documentId(), '<=', `${yyyyMM}-${pad2(daysInMonth)}`)
       .get();
@@ -1454,7 +1454,7 @@ async function saveTariffs(){
   c.tariffs = t;
 
   if(c.id){
-    await db.collection('users').doc(state.user.uid).collection('clients').doc(c.id).set({tariffs: t}, {merge:true});
+    await db.collection('users').doc(state.user.uid).collection('clients_v2').doc(c.id).set({tariffs: t}, {merge:true});
     alert('Tariffe cliente salvate');
   }else{
     await saveClients();
@@ -1533,7 +1533,7 @@ async function exportPdf(){
     map[id] = { id, in1:'', out1:'', in2:'', out2:'', ordH:0, strH:0, totalH:0, km:0, note:'', workMode:'locale', travelVehicle:'', travelH:0, trasfertaNonLavorata:false, clientIndex:-1 };
   }
   try{
-    const snap = await db.collection('users').doc(state.user.uid).collection('days')
+    const snap = await db.collection('users').doc(state.user.uid).collection('days_v2')
       .where(firebase.firestore.FieldPath.documentId(), '>=', `${yyyyMM}-01`)
       .where(firebase.firestore.FieldPath.documentId(), '<=', `${yyyyMM}-${pad2(last)}`)
       .get();
