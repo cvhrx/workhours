@@ -68,16 +68,12 @@
     </aside>
 
     <main class="main-area">
-      <header class="mobile-topbar mobile-only">
-        <button type="button" class="mobile-logout" id="btnLogoutMobileTop">Logout</button>
-      </header>
-
       <header class="topbar desktop-only">
         <div><h1 id="pageTitle">Dashboard</h1><p class="muted">WorkHours Artigiano</p></div>
         <button type="button" class="btn ghost" id="btnLogout">Logout</button>
       </header>
 
-      <section id="dashboardPage" class="page page-active">
+      <section id="dashboardPage" class="page page-active desktop-only">
         <div class="dashboard-toolbar card compact-card">
           <div>
             <h2>Andamento mese</h2>
@@ -115,7 +111,7 @@
         </div>
       </section>
 
-      <section id="rapportiniPage" class="page">
+      <section id="rapportiniPage" class="page page-active-mobile">
         <div class="card row two desktop-only">
           <div class="field full"><label>Giorno</label><input type="date" id="dayPicker"></div>
         </div>
@@ -193,7 +189,7 @@
         </section>
       </section>
 
-      <section id="calendarioPage" class="page">
+      <section id="calendarioPage" class="page desktop-only">
         <div class="calendar-layout">
           <section id="calView" class="card calendar-card">
             <div class="card-head calendar-head">
@@ -218,7 +214,7 @@
         </div>
       </section>
 
-      <section id="clientiPage" class="page">
+      <section id="clientiPage" class="page desktop-only">
         <div class="clients-hero card">
           <div>
             <span class="eyebrow">Anagrafica</span>
@@ -366,7 +362,7 @@
         </div>
       </section>
 
-      <section id="pdfPage" class="page">
+      <section id="pdfPage" class="page desktop-only">
         <section class="card pdf-hero-card">
           <div class="card-head">
             <div>
@@ -433,7 +429,7 @@
         </section>
       </section>
 
-      <section id="finanzePage" class="page">
+      <section id="finanzePage" class="page desktop-only">
         <div class="page-intro finance-intro">
           <div>
             <p class="eyebrow">Finanze</p>
@@ -494,7 +490,7 @@
         </section>
       </section>
 
-      <section id="settingsPage" class="page">
+      <section id="settingsPage" class="page desktop-only">
         <section class="card">
           <h2>Impostazioni</h2>
           <div class="settings-grid">
@@ -521,16 +517,6 @@
         </section>
       </section>
     </main>
-
-    <nav class="mobile-bottom-nav mobile-only" aria-label="Menu mobile">
-      <button type="button" class="nav-item mobile-nav-item active" data-page="dashboardPage"><span>🏠</span><small>Dashboard</small></button>
-      <button type="button" class="nav-item mobile-nav-item" data-page="rapportiniPage"><span>📝</span><small>Rapportini</small></button>
-      <button type="button" class="nav-item mobile-nav-item" data-page="calendarioPage"><span>📅</span><small>Calendario</small></button>
-      <button type="button" class="nav-item mobile-nav-item" data-page="clientiPage"><span>👥</span><small>Clienti</small></button>
-      <button type="button" class="nav-item mobile-nav-item" data-page="pdfPage"><span>📄</span><small>PDF</small></button>
-      <button type="button" class="nav-item mobile-nav-item" data-page="finanzePage"><span>💶</span><small>Finanze</small></button>
-      <button type="button" class="nav-item mobile-nav-item" data-page="settingsPage"><span>⚙️</span><small>Impost.</small></button>
-    </nav>
   </section>
 
   <dialog id="dayDlg">
@@ -541,7 +527,7 @@
 
 
   <script>
-    if('serviceWorker' in navigator){window.addEventListener('load',()=>navigator.serviceWorker.register('service-worker_v13b.js'));}
+    if('serviceWorker' in navigator){window.addEventListener('load',()=>navigator.serviceWorker.register('service-worker_v12c1.js'));}
   </script>
   <script src="firebase.js"></script>
   <script src="app.js"></script>
