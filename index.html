@@ -519,11 +519,9 @@
     </main>
   </section>
   <nav class="mobile-bottom-nav" aria-label="Menu mobile">
-    <button type="button" class="nav-item active" data-page="dashboardPage">🏠<span>Dashboard</span></button>
-    <button type="button" class="nav-item" data-page="rapportiniPage">📝<span>Rapportini</span></button>
+    <button type="button" class="nav-item active" data-page="rapportiniPage">📝<span>Rapportini</span></button>
     <button type="button" class="nav-item" data-page="calendarioPage">📅<span>Calendario</span></button>
     <button type="button" class="nav-item" data-page="clientiPage">👥<span>Clienti</span></button>
-    <button type="button" class="nav-item" data-page="pdfPage">📄<span>PDF</span></button>
     <button type="button" class="nav-item" data-page="finanzePage">💶<span>Finanze</span></button>
     <button type="button" class="nav-item" data-page="settingsPage">⚙️<span>Impost.</span></button>
   </nav>
@@ -536,9 +534,26 @@
 
 
   <script>
-    if('serviceWorker' in navigator){window.addEventListener('load',()=>navigator.serviceWorker.register('service-worker_v13a3.js'));}
+    if('serviceWorker' in navigator){window.addEventListener('load',()=>navigator.serviceWorker.register('service-worker_v13a4.js'));}
   </script>
   <script src="firebase.js"></script>
   <script src="app.js"></script>
+  <script>
+    // STEP13A4: fallback navigation mobile senza toccare app.js
+    document.addEventListener('click', function(e){
+      const btn = e.target.closest('.mobile-bottom-nav [data-page]');
+      if(!btn) return;
+      e.preventDefault();
+      const page = btn.dataset.page;
+      if(typeof showMainPage === 'function'){
+        showMainPage(page);
+      }else{
+        document.querySelectorAll('.page').forEach(p=>p.classList.remove('page-active','page-active-mobile'));
+        const target = document.getElementById(page);
+        if(target) target.classList.add('page-active');
+        document.querySelectorAll('.mobile-bottom-nav .nav-item').forEach(b=>b.classList.toggle('active', b===btn));
+      }
+    }, true);
+  </script>
 </body>
 </html>

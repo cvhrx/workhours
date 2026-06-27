@@ -1255,3 +1255,30 @@ body::before,.sidebar::before{
   .mobile-bottom-nav .nav-item span{font-size:10.5px!important;line-height:1!important;white-space:nowrap!important;}
   .mobile-bottom-nav .nav-item.active{background:var(--primary)!important;color:#fff!important;-webkit-text-fill-color:#fff!important;}
 }
+
+
+/* STEP13A4 - bottom bar definitiva */
+@media (max-width:768px){
+  .mobile-bottom-nav{
+    display:flex!important;
+    justify-content:space-between!important;
+    gap:6px!important;
+    overflow-x:visible!important;
+  }
+  .mobile-bottom-nav .nav-item{
+    flex:1 1 0!important;
+    min-width:0!important;
+    max-width:none!important;
+    padding:7px 4px!important;
+    min-height:56px!important;
+  }
+  .mobile-bottom-nav .nav-item span{
+    font-size:9.8px!important;
+    max-width:100%!important;
+    overflow:hidden!important;
+    text-overflow:ellipsis!important;
+  }
+  .page{display:none!important;}
+  .page.page-active{display:block!important;}
+  #rapportiniPage:not(.page-active){display:none!important;}
+}
