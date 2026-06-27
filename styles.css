@@ -1118,3 +1118,17 @@ body::before,.sidebar::before{
 .company-form-grid{margin-top:12px;}
 .company-settings-box .row{margin-top:12px;}
 #companySaveStatus{margin-top:8px;}
+
+
+/* STEP13A1 mobile CSS only */
+@media (max-width: 768px){
+  .sidebar{display:none!important;}
+  .app-shell,.main-area{display:block!important;width:100%!important;margin:0!important}
+  .topbar .brand,.topbar .logo,.brand-wrap{display:none!important}
+  .topbar{padding:12px 16px;justify-content:flex-end!important}
+  .grid,.cards,.row{display:block!important}
+  .card{width:100%!important;margin-bottom:16px}
+  input,select,textarea,button{max-width:100%!important}
+  table{display:block;overflow-x:auto}
+  body{padding-bottom:20px}
+}
