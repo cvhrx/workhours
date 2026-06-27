@@ -518,6 +518,15 @@
       </section>
     </main>
   </section>
+  <nav class="mobile-bottom-nav" aria-label="Menu mobile">
+    <button type="button" class="nav-item active" data-page="dashboardPage">🏠<span>Dashboard</span></button>
+    <button type="button" class="nav-item" data-page="rapportiniPage">📝<span>Rapportini</span></button>
+    <button type="button" class="nav-item" data-page="calendarioPage">📅<span>Calendario</span></button>
+    <button type="button" class="nav-item" data-page="clientiPage">👥<span>Clienti</span></button>
+    <button type="button" class="nav-item" data-page="pdfPage">📄<span>PDF</span></button>
+    <button type="button" class="nav-item" data-page="finanzePage">💶<span>Finanze</span></button>
+    <button type="button" class="nav-item" data-page="settingsPage">⚙️<span>Impost.</span></button>
+  </nav>
 
   <dialog id="dayDlg">
     <div class="dlg-head"><h3>Dettaglio giornata</h3><button id="closeDayDlg" class="icon">✕</button></div>
@@ -527,7 +536,7 @@
 
 
   <script>
-    if('serviceWorker' in navigator){window.addEventListener('load',()=>navigator.serviceWorker.register('service-worker_v13a2.js'));}
+    if('serviceWorker' in navigator){window.addEventListener('load',()=>navigator.serviceWorker.register('service-worker_v13a3.js'));}
   </script>
   <script src="firebase.js"></script>
   <script src="app.js"></script>
