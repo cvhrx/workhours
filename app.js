@@ -109,6 +109,7 @@ function initShellNav(){
   const logout = ()=> auth.signOut();
   const b1=document.getElementById('btnLogout'); if(b1) b1.onclick=logout;
   const b2=document.getElementById('btnLogoutMobile'); if(b2) b2.onclick=logout;
+  const b3=document.getElementById('btnLogoutMobileTop'); if(b3) b3.onclick=logout;
 }
 
 function showMainPage(pageId){
