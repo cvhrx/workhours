@@ -1168,3 +1168,132 @@ body::before,.sidebar::before{
   .stat-card strong{font-size:22px!important;}
   .mobile-nav-item{flex-basis:64px;}
 }
+
+
+/* STEP13B - Mobile rapportini fix */
+@media(max-width:900px){
+  html,body{
+    width:100%;
+    max-width:100%;
+    overflow-x:hidden!important;
+  }
+
+  .app-shell{
+    padding-bottom:calc(104px + env(safe-area-inset-bottom))!important;
+  }
+
+  .main-area{
+    overflow-x:hidden!important;
+    padding-bottom:calc(118px + env(safe-area-inset-bottom))!important;
+  }
+
+  /* Mobile header minimale: solo logout */
+  .mobile-topbar{
+    justify-content:flex-end!important;
+    min-height:58px!important;
+    margin:-14px -14px 14px!important;
+    padding:10px 14px!important;
+  }
+  .mobile-topbar-brand,
+  #rapportiniPage .mobile-brand{
+    display:none!important;
+  }
+  .mobile-logout{
+    width:auto!important;
+    min-width:96px!important;
+    min-height:46px!important;
+    padding:10px 16px!important;
+  }
+
+  /* Fix navigazione mobile: niente pagina bloccata su Rapportini */
+  .page,
+  #rapportiniPage{
+    display:none!important;
+  }
+  .page.page-active{
+    display:block!important;
+  }
+
+  /* Rapportini: una sola colonna reale */
+  #rapportiniPage,
+  #compileCard{
+    width:100%!important;
+    max-width:100%!important;
+    overflow:hidden!important;
+  }
+  #compileCard .card-head{
+    display:block!important;
+  }
+  #compileCard .grid-2{
+    display:block!important;
+    grid-template-columns:none!important;
+    width:100%!important;
+    max-width:100%!important;
+  }
+  #compileCard .grid-2 > .row.two.tight,
+  #compileCard .row.two{
+    display:block!important;
+    width:100%!important;
+    max-width:100%!important;
+  }
+  #compileCard .grid-2 > .row.two.tight > .field,
+  #compileCard .row.two > .field{
+    display:block!important;
+    width:100%!important;
+    max-width:100%!important;
+    margin-bottom:16px!important;
+  }
+  #compileCard .timebox{
+    display:grid!important;
+    grid-template-columns:1fr 1fr!important;
+    width:100%!important;
+    gap:10px!important;
+  }
+  #compileCard .timebox select,
+  #compileCard input,
+  #compileCard select,
+  #compileCard textarea{
+    width:100%!important;
+    max-width:100%!important;
+    min-width:0!important;
+  }
+
+  /* Azioni rapporto: non deve coprire i campi e deve restare cliccabile */
+  #compileCard .action-row{
+    position:static!important;
+    display:grid!important;
+    grid-template-columns:1fr!important;
+    gap:10px!important;
+    margin-top:14px!important;
+    padding:0!important;
+    border:0!important;
+    box-shadow:none!important;
+    background:transparent!important;
+  }
+  #compileCard .action-row .btn{
+    width:100%!important;
+    min-height:48px!important;
+  }
+
+  /* Bottom nav cliccabile e sopra la safe area iOS */
+  .mobile-bottom-nav{
+    z-index:9999!important;
+    pointer-events:auto!important;
+    bottom:0!important;
+    padding:8px 8px calc(10px + env(safe-area-inset-bottom))!important;
+    min-height:calc(74px + env(safe-area-inset-bottom))!important;
+    touch-action:pan-x!important;
+  }
+  .mobile-bottom-nav .mobile-nav-item{
+    pointer-events:auto!important;
+    touch-action:manipulation!important;
+    flex:0 0 76px!important;
+    min-width:76px!important;
+    min-height:58px!important;
+  }
+}
+
+@media(max-width:420px){
+  .mobile-topbar{margin:-10px -10px 12px!important;padding:10px!important;}
+  .mobile-bottom-nav .mobile-nav-item{flex-basis:70px!important;min-width:70px!important;}
+}
