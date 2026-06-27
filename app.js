@@ -1,4 +1,4 @@
-// BUILD: STEP12B_USA_V2
+// BUILD: STEP12C1_DATI_AZIENDA_SAFE
 const $ = s => document.querySelector(s);
 const pad2 = n => String(n).padStart(2,'0');
 const fmtIT = iso => { const [y,m,d] = iso.split('-'); return `${d}/${m}/${y}`; };
@@ -86,6 +86,8 @@ document.addEventListener('DOMContentLoaded', ()=>{
   setupFinanceControls();
   const migrateBtn = document.getElementById('btnMigrateV2');
   if(migrateBtn) migrateBtn.onclick = migrateToV2;
+  const saveCompanyBtn = document.getElementById('btnSaveCompany');
+  if(saveCompanyBtn) saveCompanyBtn.onclick = saveCompanyData;
   const tabList = document.getElementById('tabList');
   if(tabList) tabList.onclick = ()=> switchView('list');
   const tabCal = document.getElementById('tabCal');
@@ -730,6 +732,7 @@ async function loadClientsAndTariffs(){
     state.tariffs = data.tariffs || state.tariffs;
     state.company = data.company || {};
     state.tariffsNoClient = data.tariffsNoClient || null;
+    populateCompanyForm();
     clientOrder = Array.isArray(data.clientOrder) ? data.clientOrder.map(String) : [];
     setTariffInputs(state.tariffs);
   }
@@ -1795,6 +1798,60 @@ function normalizeWorkModeForV2(d){
 function normalizeVehicleForV2(d){
   const v = d?.travelVehicle || '';
   return ['auto','aereo','mezzo_fornito'].includes(v) ? v : '';
+}
+
+
+function populateCompanyForm(){
+  const co = state.company || {};
+  const map = {
+    companyRagione: co.ragione || co.companyName || co.name || '',
+    companyPiva: co.piva || co.vat || '',
+    companyCf: co.cf || co.taxCode || '',
+    companyIndirizzo: co.indirizzo || co.address || '',
+    companyTelefono: co.telefono || co.phone || '',
+    companyEmail: co.email || '',
+    companyPec: co.pec || '',
+    companySdi: co.sdi || co.sdiCode || ''
+  };
+  Object.entries(map).forEach(([id,val])=>{
+    const el = document.getElementById(id);
+    if(el) el.value = val;
+  });
+}
+
+function collectCompanyForm(){
+  const val = id => (document.getElementById(id)?.value || '').trim();
+  return {
+    ragione: val('companyRagione'),
+    piva: val('companyPiva'),
+    cf: val('companyCf'),
+    indirizzo: val('companyIndirizzo'),
+    telefono: val('companyTelefono'),
+    email: val('companyEmail'),
+    pec: val('companyPec'),
+    sdi: val('companySdi')
+  };
+}
+
+async function saveCompanyData(){
+  if(!state.user){ alert('Devi essere loggato'); return; }
+  const status = document.getElementById('companySaveStatus');
+  const btn = document.getElementById('btnSaveCompany');
+  try{
+    if(btn) btn.disabled = true;
+    if(status) status.textContent = 'Salvataggio dati azienda...';
+    const company = collectCompanyForm();
+    await db.collection('users').doc(state.user.uid).set({ company }, { merge:true });
+    state.company = company;
+    populateCompanyForm();
+    if(status) status.textContent = 'Dati azienda salvati.';
+  }catch(e){
+    console.error('SAVE COMPANY ERROR', e);
+    if(status) status.textContent = 'Errore salvataggio dati azienda.';
+    alert(e.message || e.code || 'Errore salvataggio dati azienda');
+  }finally{
+    if(btn) btn.disabled = false;
+  }
 }
 
 function buildV2Day(dayId, raw, clientMap){

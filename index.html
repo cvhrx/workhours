@@ -494,7 +494,22 @@
         <section class="card">
           <h2>Impostazioni</h2>
           <div class="settings-grid">
-            <div class="setting-box"><h3>Dati azienda</h3><p class="muted">Gestione dati aziendali. Verrà collegata nello step successivo.</p></div>
+            <div class="setting-box company-settings-box">
+              <h3>Dati azienda</h3>
+              <p class="muted">Dati usati per intestazione e PDF.</p>
+              <div class="form-grid compact company-form-grid">
+                <div class="field"><label>Ragione sociale</label><input id="companyRagione" placeholder="Es. Mendoza Company"></div>
+                <div class="field"><label>Partita IVA</label><input id="companyPiva" placeholder="P.IVA"></div>
+                <div class="field"><label>Codice fiscale</label><input id="companyCf" placeholder="Codice fiscale"></div>
+                <div class="field"><label>Indirizzo</label><input id="companyIndirizzo" placeholder="Via, numero civico"></div>
+                <div class="field"><label>Telefono</label><input id="companyTelefono" placeholder="Telefono"></div>
+                <div class="field"><label>Email</label><input id="companyEmail" placeholder="Email aziendale"></div>
+                <div class="field"><label>PEC</label><input id="companyPec" placeholder="PEC"></div>
+                <div class="field"><label>SDI</label><input id="companySdi" placeholder="Codice destinatario"></div>
+              </div>
+              <div class="row gap"><button type="button" class="btn primary" id="btnSaveCompany">Salva dati azienda</button></div>
+              <p class="muted" id="companySaveStatus"></p>
+            </div>
             <div class="setting-box"><h3>Tariffe globali</h3><p class="muted">Le tariffe globali sono gestibili dalla pagina Clienti → Tariffe.</p></div>
             <div class="setting-box"><h3>Backup / Ripristino</h3><p class="muted">Area prevista per export e sicurezza dati.</p></div>
             <div class="setting-box migration-box"><h3>Migrazione WorkHours v2</h3><p class="muted">Copia clienti e giornate nelle nuove collection <code>clients_v2</code> e <code>days_v2</code>. I dati vecchi restano come backup.</p><div class="row gap"><button type="button" class="btn primary" id="btnMigrateV2">Migra a V2</button></div><pre id="migrationV2Status" class="migration-status">Pronto per la migrazione.</pre></div>
@@ -512,7 +527,7 @@
 
 
   <script>
-    if('serviceWorker' in navigator){window.addEventListener('load',()=>navigator.serviceWorker.register('service-worker_v12b.js'));}
+    if('serviceWorker' in navigator){window.addEventListener('load',()=>navigator.serviceWorker.register('service-worker_v12c1.js'));}
   </script>
   <script src="firebase.js"></script>
   <script src="app.js"></script>
