@@ -534,12 +534,12 @@
 
 
   <script>
-    if('serviceWorker' in navigator){window.addEventListener('load',()=>navigator.serviceWorker.register('service-worker_v13a5.js'));}
+    if('serviceWorker' in navigator){window.addEventListener('load',()=>navigator.serviceWorker.register('service-worker_v13a6.js'));}
   </script>
   <script src="firebase.js"></script>
   <script src="app.js"></script>
   <script>
-    // STEP13A5: navigazione mobile stabile senza toccare app.js
+    // STEP13A6: navigazione mobile stabile senza toccare app.js
     document.addEventListener('click', function(e){
       const btn = e.target.closest('.mobile-bottom-nav [data-page]');
       if(!btn) return;

@@ -1339,3 +1339,30 @@ body::before,.sidebar::before{
     color:#fff!important;
   }
 }
+
+
+/* STEP13A6 - override mobile page visibility after old STEP13 rules */
+@media (max-width: 900px){
+  /* Old responsive CSS had #rapportiniPage-only rules with high specificity.
+     These ID-based rules restore normal page switching on mobile. */
+  #dashboardPage:not(.page-active),
+  #rapportiniPage:not(.page-active):not(.page-active-mobile),
+  #calendarioPage:not(.page-active),
+  #clientiPage:not(.page-active),
+  #pdfPage:not(.page-active),
+  #finanzePage:not(.page-active),
+  #settingsPage:not(.page-active){
+    display:none!important;
+  }
+
+  #dashboardPage.page-active,
+  #rapportiniPage.page-active,
+  #rapportiniPage.page-active-mobile,
+  #calendarioPage.page-active,
+  #clientiPage.page-active,
+  #pdfPage.page-active,
+  #finanzePage.page-active,
+  #settingsPage.page-active{
+    display:block!important;
+  }
+}
