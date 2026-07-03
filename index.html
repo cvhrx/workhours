@@ -534,24 +534,32 @@
 
 
   <script>
-    if('serviceWorker' in navigator){window.addEventListener('load',()=>navigator.serviceWorker.register('service-worker_v13a4.js'));}
+    if('serviceWorker' in navigator){window.addEventListener('load',()=>navigator.serviceWorker.register('service-worker_v13a5.js'));}
   </script>
   <script src="firebase.js"></script>
   <script src="app.js"></script>
   <script>
-    // STEP13A4: fallback navigation mobile senza toccare app.js
+    // STEP13A5: navigazione mobile stabile senza toccare app.js
     document.addEventListener('click', function(e){
       const btn = e.target.closest('.mobile-bottom-nav [data-page]');
       if(!btn) return;
       e.preventDefault();
+      e.stopPropagation();
       const page = btn.dataset.page;
-      if(typeof showMainPage === 'function'){
-        showMainPage(page);
-      }else{
-        document.querySelectorAll('.page').forEach(p=>p.classList.remove('page-active','page-active-mobile'));
-        const target = document.getElementById(page);
-        if(target) target.classList.add('page-active');
-        document.querySelectorAll('.mobile-bottom-nav .nav-item').forEach(b=>b.classList.toggle('active', b===btn));
+      document.querySelectorAll('.page').forEach(p=>p.classList.remove('page-active','page-active-mobile'));
+      const target = document.getElementById(page);
+      if(target) target.classList.add('page-active');
+      document.querySelectorAll('.nav-item').forEach(b=>b.classList.toggle('active', b.dataset.page===page));
+      const titles={rapportiniPage:'Rapportini',calendarioPage:'Calendario',clientiPage:'Clienti',finanzePage:'Finanze',settingsPage:'Impostazioni'};
+      const title=document.getElementById('pageTitle');
+      if(title) title.textContent=titles[page]||'WorkHours';
+      if(page==='calendarioPage' && typeof loadMonth==='function'){
+        const dp=document.getElementById('dayPicker');
+        if(dp && dp.value) loadMonth(dp.value.slice(0,7));
+      }
+      if(page==='finanzePage'){
+        if(typeof setupFinanceControls==='function') setupFinanceControls();
+        if(typeof loadFinanceMonth==='function') loadFinanceMonth();
       }
     }, true);
   </script>
