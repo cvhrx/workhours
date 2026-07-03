@@ -1366,3 +1366,81 @@ body::before,.sidebar::before{
     display:block!important;
   }
 }
+
+
+/* STEP13A7 - mobile nav ridotta + fix dashboard/calendar */
+@media (max-width: 900px){
+  /* Stato iniziale mobile: non mostrare Dashboard sopra Rapportini */
+  #dashboardPage.page-active.desktop-only:not(.mobile-force-show){
+    display:none!important;
+  }
+  #rapportiniPage.page-active-mobile{
+    display:block!important;
+  }
+
+  /* Bottom bar solo tre voci */
+  .mobile-bottom-nav{
+    display:grid!important;
+    grid-template-columns:repeat(3,1fr)!important;
+    left:0!important;
+    right:0!important;
+    bottom:0!important;
+    border-radius:0!important;
+    padding:8px 10px calc(8px + env(safe-area-inset-bottom))!important;
+    gap:8px!important;
+    overflow:visible!important;
+  }
+  .mobile-bottom-nav .nav-item{
+    min-width:0!important;
+    width:100%!important;
+    min-height:54px!important;
+    border-radius:14px!important;
+    padding:7px 4px!important;
+  }
+  .mobile-bottom-nav .nav-item span{
+    font-size:10px!important;
+  }
+
+  /* Calendario dentro al telefono */
+  #calendarioPage{
+    width:100%!important;
+    max-width:100%!important;
+    overflow-x:hidden!important;
+  }
+  #calendarioPage .card,
+  #calendarioPage .calendar-card,
+  #calendarioPage .calendar-layout,
+  #calendarioPage #calView{
+    width:100%!important;
+    max-width:100%!important;
+    overflow-x:hidden!important;
+  }
+  #calendarioPage .calendar-layout{
+    display:block!important;
+  }
+  #calendarioPage .cal-grid-clean,
+  #calendarioPage .calendar-grid,
+  #calendarioPage .month-grid{
+    display:grid!important;
+    grid-template-columns:repeat(7,minmax(0,1fr))!important;
+    gap:6px!important;
+    width:100%!important;
+    max-width:100%!important;
+  }
+  #calendarioPage .cal-day,
+  #calendarioPage .day-cell,
+  #calendarioPage .calendar-day{
+    min-width:0!important;
+    width:auto!important;
+    padding:7px 3px!important;
+    border-radius:10px!important;
+    font-size:11px!important;
+  }
+  #calendarioPage .calendar-head,
+  #calendarioPage .calendar-legend{
+    display:flex!important;
+    flex-wrap:wrap!important;
+    justify-content:flex-start!important;
+    gap:8px!important;
+  }
+}

@@ -521,9 +521,7 @@
   <nav class="mobile-bottom-nav" aria-label="Menu mobile">
     <button type="button" class="nav-item active" data-page="rapportiniPage">📝<span>Rapportini</span></button>
     <button type="button" class="nav-item" data-page="calendarioPage">📅<span>Calendario</span></button>
-    <button type="button" class="nav-item" data-page="clientiPage">👥<span>Clienti</span></button>
     <button type="button" class="nav-item" data-page="finanzePage">💶<span>Finanze</span></button>
-    <button type="button" class="nav-item" data-page="settingsPage">⚙️<span>Impost.</span></button>
   </nav>
 
   <dialog id="dayDlg">
@@ -534,7 +532,7 @@
 
 
   <script>
-    if('serviceWorker' in navigator){window.addEventListener('load',()=>navigator.serviceWorker.register('service-worker_v13a6.js'));}
+    if('serviceWorker' in navigator){window.addEventListener('load',()=>navigator.serviceWorker.register('service-worker_v13a7.js'));}
   </script>
   <script src="firebase.js"></script>
   <script src="app.js"></script>
@@ -550,7 +548,7 @@
       const target = document.getElementById(page);
       if(target) target.classList.add('page-active');
       document.querySelectorAll('.nav-item').forEach(b=>b.classList.toggle('active', b.dataset.page===page));
-      const titles={rapportiniPage:'Rapportini',calendarioPage:'Calendario',clientiPage:'Clienti',finanzePage:'Finanze',settingsPage:'Impostazioni'};
+      const titles={rapportiniPage:'Rapportini',calendarioPage:'Calendario',finanzePage:'Finanze'};
       const title=document.getElementById('pageTitle');
       if(title) title.textContent=titles[page]||'WorkHours';
       if(page==='calendarioPage' && typeof loadMonth==='function'){
